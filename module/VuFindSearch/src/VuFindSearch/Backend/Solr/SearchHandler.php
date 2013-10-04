@@ -54,7 +54,8 @@ class SearchHandler
      * @var array
      */
     protected static $configKeys = array(
-        'CustomMunge', 'DismaxFields', 'QueryFields', 'DismaxParams', 'FilterQuery'
+        'CustomMunge', 'DismaxFields', 'DisableExtendedDismax', 'QueryFields',
+        'DismaxParams', 'FilterQuery'
     );
 
     /**
@@ -168,6 +169,18 @@ class SearchHandler
     public function hasDismax()
     {
         return !empty($this->specs['DismaxFields']);
+    }
+
+    /**
+     * Return true if the handler supports Extended Dismax.
+     *
+     * @return bool
+     */
+    public function hasExtendedDismax()
+    {
+        $enabled = !isset($this->specs['DisableExtendedDismax'])
+            || !$this->specs['DisableExtendedDismax'];
+        return $enabled && $this->hasDismax();
     }
 
     /**
