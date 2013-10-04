@@ -120,6 +120,7 @@ select, .btn:not(.btn-link){vertical-align:top}
 .searchHomeContent #searchForm .btn-link {font-size:14px;height:23px;vertical-align:bottom}
 .searchHomeContent #searchForm_lookfor {height:30px}
 .searchHomeContent #searchForm_type {height:30px}
+.searchHomeContent .unstyled li {margin-bottom:0}
 
 /* --- SEARCH --- */
 .bulkActionButtons {border-bottom:1px solid #DDD;margin-top:6px;padding-bottom:6px}
