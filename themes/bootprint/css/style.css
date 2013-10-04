@@ -88,7 +88,9 @@ select, .btn:not(.btn-link){vertical-align:top}
 .sidebar .nav-list li span.main {width:auto}
 .sidebar .nav-list li.nav-header {background:#EEE;border-color:#DDD;min-height:1px;padding:2px 4px}
 .sidebar .small {margin-top:10px}
-#publishDateFilter input[type="text"] {border-color:#CCC;margin-top:.5em;padding:0}
+#publishDateFilter {margin:6px 0}
+#publishDateFilter .btn {margin-top:.5em;padding:1px 12px}
+#publishDateFilter input[type="text"] {border-color:#CCC;padding:0}
 #publishDateFilter input[type="text"]:focus {border-color:#999;box-shadow:none}
 #publishDateFilter .slider-handle {background:#CCC;border:1px solid #AAA}
 .unstyled li {margin-bottom:6px}
