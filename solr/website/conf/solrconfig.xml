@@ -395,6 +395,7 @@
      <str name="spellcheck.extendedResults">true</str>
      <str name="spellcheck.onlyMorePopular">true</str>
      <str name="spellcheck.count">20</str>
+     <str name="lowercaseOperators">false</str>
     </lst>
     <arr name="last-components">
       <str>spellcheck</str>
