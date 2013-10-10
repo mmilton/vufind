@@ -246,6 +246,7 @@ class SearchHandler
      */
     protected function dismaxSubquery($search)
     {
+        $handler = $this->hasExtendedDismax() ? 'edismax' : 'dismax';
         $dismaxParams = array();
         foreach ($this->specs['DismaxParams'] as $param) {
             $dismaxParams[] = sprintf(
@@ -253,7 +254,8 @@ class SearchHandler
             );
         }
         $dismaxQuery = sprintf(
-            '{!dismax qf="%s" %s}%s',
+            '{!%s qf="%s" %s}%s',
+            $handler,
             implode(' ', $this->specs['DismaxFields']),
             implode(' ', $dismaxParams),
             $search
@@ -349,10 +351,10 @@ class SearchHandler
      */
     protected function createQueryString($search, $advanced = false)
     {
-        // If this is a basic query and we have Dismax settings, let's build
-        // a Dismax subquery to avoid some of the ugly side effects of our Lucene
-        // query generation logic.
-        if (!$advanced && $this->hasDismax()) {
+        // If this is a basic query and we have Dismax settings (or if we have
+        // Extended Dismax available), let's build a Dismax subquery to avoid
+        // some of the ugly side effects of our Lucene query generation logic.
+        if (($this->hasExtendedDismax() || !$advanced) && $this->hasDismax()) {
             $query = $this->dismaxSubquery($search);
         } else {
             $mungeRules  = $this->mungeRules();

@@ -116,7 +116,18 @@
         <th><?=$this->transEsc('Published')?>: </th>
         <td>
           <? foreach ($publications as $field): ?>
-            <?=$this->escapeHtml($field)?><br/>
+            <span property="publisher" typeof="Organization">
+            <? $pubPlace = $field->getPlace(); if (!empty($pubPlace)): ?>
+              <span property="location"><?=$this->escapeHtml($pubPlace)?></span>
+            <? endif; ?>
+            <? $pubName = $field->getName(); if (!empty($pubName)): ?>
+              <span property="name"><?=$this->escapeHtml($pubName)?></span>
+            <? endif; ?>
+            </span>
+            <? $pubDate = $field->getDate(); if (!empty($pubDate)): ?>
+              <span property="publicationDate"><?=$this->escapeHtml($pubDate)?></span>
+            <? endif; ?>
+            <br/>
           <? endforeach; ?>
         </td>
       </tr>
@@ -165,7 +176,7 @@
             <? $i = 0; foreach ($field as $subfield): ?>
               <?=($i++ == 0) ? '' : ' &gt; '?>
               <? $subject = trim($subject . ' ' . $subfield); ?>
-              <a class="backlink" title="<?=$this->escapeHtml($subject)?>" href="<?=$this->record($this->driver)->getLink('subject', $subject)?>" class="subjectHeading"><?=trim($this->escapeHtml($subfield))?></a>
+              <a class="backlink" title="<?=$this->escapeHtml($subject)?>" href="<?=$this->record($this->driver)->getLink('subject', $subject)?>"><?=trim($this->escapeHtml($subfield))?></a>
             <? endforeach; ?>
           </div>
           <? endforeach; ?>
