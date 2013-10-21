@@ -1,0 +1,350 @@
+<?php
+/**
+ * EBSCO EDS API Search Model
+ *
+ * PHP version 5
+ *
+ * Copyright (C) Serials Solutions 2011.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2,
+ * as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * @category EBSCOIndustries
+ * @package  EBSCO
+ * @author   Michelle Milton <mmilton@epnet.com>
+ * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
+ */
+namespace EBSCO\EdsApi;
+/**
+ * EBSCO EDS API Search Model
+ * 
+ * @category EBSCOIndustries
+ * @package  EBSCO
+ * @author   Michelle Milton <mmilton@epnet.com>
+ * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
+ */
+class SearchRequestModel
+{
+	/**
+	 * The what to search for, formatted as [{boolean operator},][{field code}:]{term}
+	 * @var array
+	 */
+	protected $query = array();
+	
+	/**
+	 * Whether or not to return facets with the search results. valid values are 'y' or 'n'
+	 * @var string
+	 */
+	protected $includeFacets;
+	
+	/**
+	 * Array of filters to apply to the search
+	 * @var array
+	 */
+	protected $facetFilters = array();
+	
+	/**
+	 * Sort option to apply
+	 * @var string
+	 */
+	protected $sort;
+	
+	/**
+	 * Options to limit the resutls by
+	 * @var array
+	 */
+	protected $limiters = array();
+	
+	/**
+	 * Mode to be effective in the search
+	 * @var string
+	 */
+	protected $searchMode;
+	
+	/**
+	 * Expanders to use. Comma seperated.
+	 * @var string
+	 */
+	protected $expander;
+	
+	/**
+	 * Requested level of detail to return the results with
+	 * @var string
+	 */
+	protected $view;
+	
+	/**
+	 * Number of records to return 
+	 * @var int
+	 */
+	protected $resultsPerPage;
+	
+	/**
+	 * Page number of records to return. This is used in conjunction with the {@link $resultsPerPage} to determine
+	 * the set of records to return.
+	 * @var int
+	 */
+	protected $pageNumber;
+
+	/**
+	 * Whether or not to highlight the search term in the results. Valid values are 'y' or 'n'
+	 * @var string
+	 */
+	protected $highlight;
+	
+	/**
+	 * Collection of user actions to apply to current request
+	 * @var array
+	 */
+	protected $actions = array();
+	
+	/**
+	 * Constructor
+	 *
+	 * Sets up the EDS API Search Request model
+	 *
+	 * @param array  $parameters parameters to populate request
+	 */
+	public function __construct($parameters = array())
+	{
+		$this->setParameters($parameters);
+	}
+	
+	public function setParameters($parameters = array())
+	{
+		foreach ($parameters as $key => $value) {
+			if (property_exists($this, $key)) {
+				$this->$key = $value;
+			}
+		}
+	}
+	
+	
+	/**
+	 * Converts properties to a querystring to send to the EdsAPI
+	 * 
+	 * @return string
+	 */
+	public function convertToQueryString()
+	{ 
+		$qs = '';
+		if(isset($this->query) && 0 < sizeof($this->query))
+		{
+			for ($x=0; $x<sizeof($this->query); $x++)
+			 	$qs .= 'query-'.($x+1).'='.$this->query[$x].'&';
+		}		
+		
+		if(isset($this->facetFilters) && 0 < sizeof($this->facetFilters))
+		{
+			for ($x=0; $x<sizeof($this->facetFilters); $x++)
+				$qs .= 'facetfilter='.$this->facetFilters[$x].'&';
+		}	
+		
+		if(isset($this->limiters) && 0 < sizeof($this->limiters))
+		{
+			for ($x=0; $x<sizeof($this->limiters); $x++)
+				$qs .= 'limiter='.$this->limiters[$x].'&';
+		}
+		
+		if(isset($this->includeFacets))
+			$qs .= 'includefacets='.$this->includeFacets.'&';;
+		
+		if(isset($this->sort))
+			$qs .= 'sort='.$this->sort.'&';;
+		
+		if(isset($this->searchMode))
+			$qs .= 'searchmode='.$this->searchMode.'&';
+		
+		if(isset($this->expander))
+			$qs .= 'expander='.$this->expander.'&';
+		
+		if(isset($this->view))
+			$qs .= 'view='.$this->view.'&';
+
+		if(isset($this->resultsPerPage))
+			$qs .= 'resultsperpage='.$this->resultsPerPage.'&';
+		
+		if(isset($this->pageNumber))
+			$qs .= 'pagenumber='.$this->pageNumber.'&';
+		
+		if(isset($this->highlight))
+			$qs .= 'highlight='.$this->highlight.'&';
+		
+		
+		if(isset($this->actions) && 0 < sizeof($this->actions))
+		{
+			for ($x=0; $x<sizeof($this->actions); $x++)
+				$qs .= 'action-'.($x+1).'='.$this->actions[$x].'&';
+		}
+
+		if( $this->endsWith($qs, '&') )
+			$qs = substr($qs, 0, -1);
+		return $qs;
+	}
+	
+	/**
+	 * Converts properties to a querystring to send to the EdsAPI
+	 *
+	 * @return string
+	 */
+	public function convertToQueryStringParameterArray()
+	{
+		$qs = array();
+		if(isset($query) && 0 < sizeof($query))
+		{
+			$qs['query-x'] = $this->query; 
+		}
+	
+		if(isset($facetFilters) && 0 < sizeof($facetFilters))
+		{
+			$qs['facetfilter'] = $this->facetFilters;
+		}
+	
+		if(isset($limiters) && 0 < sizeof($limiters))
+		{
+			$qs['limiter'] = $this->limiters;
+		}
+		
+		if(isset($actions) && 0 < sizeof($actions))
+		{
+			$qs['action-x'] = $this->actions;
+		}
+		
+		if(isset($includeFacets))
+			$qs['includefacets']  = $this->includeFacets;
+	
+		if(isset($sort))
+			$qs['sort'] = $this->sort;
+	
+		if(isset($searchMode))
+			$qs['searchmode'] = $this->searchmode;
+	
+		if(isset($expander))
+			$qs['expander'] = $this->expander;
+	
+		if(isset($view))
+			$qs['view'] = $this->view;
+	
+		if(isset($resultsPerPage))
+			$qs['resultsperpage'] = $this->resultsPerPage;
+	
+		if(isset($pageNumber))
+			$qs['pagenumber'] = $this->number;
+	
+		if(isset($highlight))
+			$qs['highlight']= $this->highlight;
+	
+		return $qs;
+	}
+	
+	/**
+	 * Verify whether or not a string ends with certain characters
+	 * @param string $valueToCheck Value to check the ending characters of
+	 * @param unknown $valueToCheckFor Characters to check for
+	 * @return boolean 
+	 */
+	private function endsWith($valueToCheck, $valueToCheckFor)
+	{
+		if(!isset($valueToCheck))
+			return false;
+		return substr($valueToCheck, -strlen($valueToCheckFor)) === $valueToCheckFor;
+	}
+	
+	/**
+	 * Determins whether or not a querystring parameter is indexed
+	 * @param unknown $value parameter key to check
+	 * @return bool
+	 */
+	public static function isParameterIndexed($value)
+	{
+		//Indexed parameter names end with '-x'
+		return endsWith($value, '-x');
+	}
+	
+	/**
+	 * Get the querystring parameter name of an indexed parameter to send to the Eds Api
+	 * @param string $value Indexed parameter name
+	 * @return string 
+	 */
+	public static function getIndexedParameterName($value)
+	{
+		//Indexed parameter names end with '-x'
+		return substr($value,0, -2);
+	}
+	
+	/**
+	 * Add a new action 
+	 * @param string $action Action to add to the existing collection of actions 
+	 */
+	//TODO: will VuFind be using the ordinal?? or even using the actions??
+	public function addAction($action)
+	{
+		$this->actions[] = $action;
+	}
+	
+	/**
+	 * Add a new query expression
+	 * @param string $query Query expression to add
+	 */
+	public function addQuery($query)
+	{
+		$this->query[] = $query;
+	}
+
+	/**
+	 * Add a new limiter
+	 * @param string $limiter Limiter to add
+	 */
+	public function addLimiter($limiter)
+	{
+		$this->limiters[] = $limiter;
+	}
+	
+	/**
+	 * Add a new facet filter 
+	 * @param string $facetFilter Facet Filter to add
+	 */
+	public function addFacetFilter($facetFilter)
+	{
+		$this->facetFilters[] = $facetFilter;
+	}
+	
+	
+	/**
+	 * Escape characters that may be present in the parameter syntax
+	 *
+	 * @param string $value The value to escape
+	 *
+	 * @return string       The value with special characters escaped
+	 */
+	public static function escapeSpecialCharacters($value)
+	{
+		return addcslashes($value, ":,()");
+	}
+	
+	
+	public function __get($property) {
+		if (property_exists($this, $property)) {
+			return $this->$property;
+		}
+	}
+	
+	public function __set($property, $value) {
+		if (property_exists($this, $property)) {
+			$this->$property = $value;
+		}
+	
+		return $this;
+	}
+
+}
