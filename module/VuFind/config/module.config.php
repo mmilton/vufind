@@ -93,6 +93,8 @@ $config = array(
             'combined' => 'VuFind\Controller\CombinedController',
             'confirm' => 'VuFind\Controller\ConfirmController',
             'cover' => 'VuFind\Controller\CoverController',
+            'eds' => 'VuFind\Controller\EdsController',
+            'edsrecord' => 'VuFind\Controller\EdsrecordController',
             'error' => 'VuFind\Controller\ErrorController',
             'feedback' => 'VuFind\Controller\FeedbackController',
             'help' => 'VuFind\Controller\HelpController',
@@ -659,6 +661,14 @@ $config = array(
             'recorddriver' => array(
                 'abstract_factories' => array('VuFind\RecordDriver\PluginFactory'),
                 'factories' => array(
+                    'eds' => function ($sm) {
+                        $eds = $sm->getServiceLocator()->get('VuFind\Config')->get('EDS');
+                        $driver = new \VuFind\RecordDriver\Summon(
+                            $sm->getServiceLocator()->get('VuFind\Config')->get('config'),
+                            $eds, $eds
+                        );
+                        return $driver;
+                    },
                     'missing' => function ($sm) {
                         return new \VuFind\RecordDriver\Missing(
                             $sm->getServiceLocator()->get('VuFind\Config')->get('config')
@@ -848,6 +858,7 @@ $config = array(
             ),
             'search_backend' => array(
                 'factories' => array(
+                    'EDS' => 'VuFind\Search\Factory\EdsBackendFactory',
                     'Pazpar2' => 'VuFind\Search\Factory\Pazpar2BackendFactory',
                     'Solr' => 'VuFind\Search\Factory\SolrDefaultBackendFactory',
                     'SolrAuth' => 'VuFind\Search\Factory\SolrAuthBackendFactory',
@@ -946,6 +957,15 @@ $config = array(
         // parent class.  The defaultTab setting may be used to specify the default
         // active tab; if null, the value from the relevant .ini file will be used.
         'recorddriver_tabs' => array(
+            'VuFind\RecordDriver\EDS' => array(
+                'tabs' => array(
+                    'Description' => 'Description',
+                    'TOC' => 'TOC', 'UserComments' => 'UserComments',
+                    'Reviews' => 'Reviews', 'Excerpt' => 'Excerpt',
+                    'Details' => 'StaffViewArray',
+                ),
+                'defaultTab' => null,
+            ),
             'VuFind\RecordDriver\Pazpar2' => array(
                 'tabs' => array (
                     'Details' => 'StaffViewMARC',
@@ -1004,6 +1024,7 @@ $config = array(
 $recordRoutes = array(
     'record' => 'Record',
     'collection' => 'Collection',
+    'edsrecord' => 'EdsRecord',
     'missingrecord' => 'MissingRecord',
     'solrauthrecord' => 'Authority',
     'summonrecord' => 'SummonRecord',
@@ -1028,7 +1049,9 @@ $staticRoutes = array(
     'Cart/doExport', 'Cart/Email', 'Cart/Export', 'Cart/Home', 'Cart/MyResearchBulk',
     'Cart/Save', 'Collections/ByTitle', 'Collections/Home',
     'Combined/Home', 'Combined/Results', 'Combined/SearchBox', 'Confirm/Confirm',
-    'Cover/Show', 'Cover/Unavailable', 'Error/Unavailable',
+    'Cover/Show', 'Cover/Unavailable',
+    'EDS/Advanced', 'EDS/Home', 'EDS/Search',
+    'Error/Unavailable',
     'Feedback/Email', 'Feedback/Home', 'Help/Home',
     'Install/Done', 'Install/FixBasicConfig', 'Install/FixCache',
     'Install/FixDatabase', 'Install/FixDependencies', 'Install/FixILS',
