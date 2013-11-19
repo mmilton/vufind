@@ -97,8 +97,8 @@ class SearchRequestModel
 	protected $pageNumber;
 
 	/**
-	 * Whether or not to highlight the search term in the results. Valid values are 'y' or 'n'
-	 * @var string
+	 * Whether or not to highlight the search term in the results. 
+	 * @var boolean
 	 */
 	protected $highlight;
 	
@@ -123,8 +123,12 @@ class SearchRequestModel
 	public function setParameters($parameters = array())
 	{
 		foreach ($parameters as $key => $value) {
-			if (property_exists($this, $key)) {
-				$this->$key = $value;
+			switch($key)
+			{
+				default:
+					if (property_exists($this, $key)) {
+						$this->$key = $value;
+					}	
 			}
 		}
 	}
@@ -177,8 +181,10 @@ class SearchRequestModel
 		if(isset($this->pageNumber))
 			$qs .= 'pagenumber='.$this->pageNumber.'&';
 		
-		if(isset($this->highlight))
-			$qs .= 'highlight='.$this->highlight.'&';
+		if(isset($this->highlight)){
+			$highlightVal = $this->highlight ? 'y' : 'n';
+			$qs .= 'highlight='.$highlightVal.'&';
+		}
 		
 		
 		if(isset($this->actions) && 0 < sizeof($this->actions))
@@ -200,49 +206,52 @@ class SearchRequestModel
 	public function convertToQueryStringParameterArray()
 	{
 		$qs = array();
-		if(isset($query) && 0 < sizeof($query))
+		if(isset($this->query) && 0 < sizeof($this->query))
 		{
 			$qs['query-x'] = $this->query; 
 		}
 	
-		if(isset($facetFilters) && 0 < sizeof($facetFilters))
+		if(isset($this->facetFilters) && 0 < sizeof($this->facetFilters))
 		{
 			$qs['facetfilter'] = $this->facetFilters;
 		}
 	
-		if(isset($limiters) && 0 < sizeof($limiters))
+		if(isset($this->limiters) && 0 < sizeof($this->limiters))
 		{
 			$qs['limiter'] = $this->limiters;
 		}
 		
-		if(isset($actions) && 0 < sizeof($actions))
+		if(isset($this->actions) && 0 < sizeof($this->actions))
 		{
 			$qs['action-x'] = $this->actions;
 		}
 		
-		if(isset($includeFacets))
+		if(isset($this->includeFacets))
 			$qs['includefacets']  = $this->includeFacets;
 	
-		if(isset($sort))
+		if(isset($this->sort))
 			$qs['sort'] = $this->sort;
 	
-		if(isset($searchMode))
-			$qs['searchmode'] = $this->searchmode;
+		if(isset($this->searchMode))
+			$qs['searchmode'] = $this->searchMode;
 	
-		if(isset($expander))
+		if(isset($this->expander))
 			$qs['expander'] = $this->expander;
 	
-		if(isset($view))
+		if(isset($this->view))
 			$qs['view'] = $this->view;
 	
-		if(isset($resultsPerPage))
+		if(isset($this->resultsPerPage))
 			$qs['resultsperpage'] = $this->resultsPerPage;
 	
-		if(isset($pageNumber))
-			$qs['pagenumber'] = $this->number;
+		if(isset($this->pageNumber))
+			$qs['pagenumber'] = $this->pageNumber;
 	
-		if(isset($highlight))
-			$qs['highlight']= $this->highlight;
+		if(isset($this->highlight))
+		{
+			$highlightVal = $this->highlight ? 'y' : 'n';
+			$qs['highlight']= $highlightVal;
+		}
 	
 		return $qs;
 	}
@@ -253,7 +262,7 @@ class SearchRequestModel
 	 * @param unknown $valueToCheckFor Characters to check for
 	 * @return boolean 
 	 */
-	private function endsWith($valueToCheck, $valueToCheckFor)
+	private static function endsWith($valueToCheck, $valueToCheckFor)
 	{
 		if(!isset($valueToCheck))
 			return false;
@@ -268,7 +277,7 @@ class SearchRequestModel
 	public static function isParameterIndexed($value)
 	{
 		//Indexed parameter names end with '-x'
-		return endsWith($value, '-x');
+		return SearchRequestModel::endsWith($value, '-x');
 	}
 	
 	/**

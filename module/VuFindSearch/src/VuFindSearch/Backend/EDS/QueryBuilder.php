@@ -26,12 +26,14 @@
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     http://vufind.org
  */
-namespace VuFindSearch\Backend\EdsApi;
+namespace VuFindSearch\Backend\EDS;
+require_once 'C:\Users\Administrator\git\vufind-git\vendor\ebsco\edsapi\Ebsco\EdsApi\SearchRequestModel.php';
 
 use VuFindSearch\Query\AbstractQuery;
 use VuFindSearch\Query\QueryGroup;
 use VuFindSearch\Query\Query;
 use VuFindSearch\ParamBag;
+use EBSCO\EdsApi\SearchRequestModel as SearchRequestModel;
 /**
  * 
  * @category VuFind2
@@ -61,28 +63,28 @@ class QueryBuilder
 	public function build(AbstractQuery $query)
 	{
 		// Build base query
-		$queryStr = $this->abstractQueryToArray($query);
-	
+		$queries = $this->abstractQueryToArray($query);
+		
 		// Send back results
-		$params = new ParamBag($queryStr);
+		$params = new ParamBag(array('query' => $queries));
 		return $params;
 	}
 	
 	/**
-	 * Convert a single Query object to an eds api query object
-	 * in the format [operator,][fieldCode]:term
+	 * Convert a single Query object to an eds api query array
 	 *
 	 * @param Query $query Query to convert
 	 *
-	 * @return array
+	 * @return string
 	 */
-	protected function queryToQueryArray(Query $query)
+	protected function queryToEdsQuery(Query $query)
 	{
-		// Clean and validate input:
+		$expression = str_replace('"', '', $query->getString());
+		$expression = SearchRequestModel::escapeSpecialCharacters($expression);
 		$fieldCode = ($query->getHandler() == 'AllFields')? '' : $query->getHandler();  //fieldcode
-		$term = str_replace('"', '', $query->getString());
-		$operator = ''; //TODO::Not sure where/how this is going to be populated yet. 
-		return array( 'fieldcode' => $fieldCode, 'term' => $term, 'operator' => $operator);
+		if(!empty($fieldCode))
+			$expression = $fieldCode.':'.$expression;
+		return $expression;
 	}
 	
 	
@@ -98,7 +100,7 @@ class QueryBuilder
 	protected function abstractQueryToArray(AbstractQuery $query)
 	{
 		if ($query instanceof Query) {
-			return $this->queryToQueryArray($query);
+			return array('1'=>$this->queryToEdsQuery($query));
 		} else {
 			return $this->queryGroupToArray($query);
 		}
@@ -113,6 +115,7 @@ class QueryBuilder
 	 */
 	protected function queryGroupToArray(QueryGroup $query)
 	{
+		return array();
 		//NEED TO DETERMINE WHETHER OR NOT WE ARE DOING ADVANCED SEARCH QUERIES THE SAME....
 		/*
 		$groups = $excludes = array();

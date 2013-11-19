@@ -25,10 +25,11 @@
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     http://vufind.org
  */
-namespace VuFindSearch\Backend\EdsApi\Response;
+namespace VuFindSearch\Backend\EDS\Response;
 
 use VuFindSearch\Response\RecordCollectionFactoryInterface;
 use VuFindSearch\Exception\InvalidArgumentException;
+use VuFindSearch\Backend\EDS\Response\RecordCollection;
 
 /**
  * Factory for record collection.
@@ -69,7 +70,7 @@ class RecordCollectionFactory implements RecordCollectionFactoryInterface
         }
         $this->recordFactory = $recordFactory;
         $this->collectionClass = (null === $collectionClass)
-            ? 'VuFindSearch\Backend\EdsApi\Response\RecordCollection'
+            ? 'VuFindSearch\Backend\EDS\Response\RecordCollection'
             : $collectionClass;
     }
 
@@ -92,20 +93,18 @@ class RecordCollectionFactory implements RecordCollectionFactoryInterface
          }
          $collection = new $this->collectionClass($response);
          //obtain path to records
-         //TODO:: This will only work for the search response, not Retrieve!
-         //need to change the value that is being set from the EBSCO module
        	$records = array();
-       	if(isset($response['SearchResponseMessageGet']) &&  
-       	  isset($response['SearchResponseMessageGet']['SearchResult']) &&
-       	  isset($response['SearchResponseMessageGet']['SearchResult']['Data']) &&
-       	  isset($response['SearchResponseMessageGet']['SearchResult']['Data']['Records']) ){
-       		$records = $response['SearchResponseMessageGet']['SearchResult']['Data']['Records'];
+       	if(isset($response['SearchResult']) &&
+       	  isset($response['SearchResult']['Data']) &&
+       	  isset($response['SearchResult']['Data']['Records']) ){ //Format of the search response
+       		$records = $response['SearchResult']['Data']['Records'];
+        }else if(isset($response['Records'])){ //Format of the retrieve response
+        	$records = $response['Records'];
         }
 
         foreach ($records as $record) {
             $collection->add(call_user_func($this->recordFactory, $record));
         }
-        
     	return $collection;
     }
 

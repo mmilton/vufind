@@ -26,7 +26,9 @@
  * @link     http://vufind.org   Main Site
  */
 namespace VuFind\Controller;
+require_once 'C:\Users\Administrator\git\vufind-git\vendor\ebsco\edsapi\Ebsco\EdsApi\Zend2.php';
 
+use EBSCO\EdsApi\Zend2 as EdsApi;
 /**
  * EDS Controller
  *
@@ -97,10 +99,20 @@ class EdsController extends AbstractSearch
      */
     public function searchAction()
     {
-        return $this->resultsAction();
+    	return $this->resultsAction();
     }
 
     /**
+     * Obtains the session token
+     * 
+     */
+	public function getSessionToken()
+	{
+		$sessId = $this->getServiceLocator()->get('VuFind\SessionManager')->getId();
+	}    
+
+	
+	/**
      * Return a Search Results object containing advanced facet information.  This
      * data may come from the cache.
      *
@@ -198,5 +210,6 @@ class EdsController extends AbstractSearch
         }
         return $facetList;
     }
+ 
 }
 

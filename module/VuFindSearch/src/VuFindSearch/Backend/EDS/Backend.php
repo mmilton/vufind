@@ -26,12 +26,13 @@
  * @link     http://vufind.org
  */
 
-namespace VuFindSearch\Backend\EdsApi;
+namespace VuFindSearch\Backend\EDS;
+require_once 'C:\Users\Administrator\git\vufind-git\vendor\ebsco\edsapi\Ebsco\EdsApi\SearchRequestModel.php';
 
 use EBSCO\EdsApi\Zend2 as ApiClient; 
 use EBSCO\EdsApi\EdsApi_REST_Base;
 use EBSCO\EdsApi\EbscoEdsApiException;
-use EBSCO\EdsApi\SearchRequestModel;
+use EBSCO\EdsApi\SearchRequestModel as SearchRequestModel;
 
 use VuFindSearch\Query\AbstractQuery;
 
@@ -45,8 +46,10 @@ use VuFindSearch\Backend\BackendInterface as BackendInterface;
 use VuFindSearch\Backend\Exception\BackendException;
 
 use Zend\Log\LoggerInterface;
-use VuFindSearch\Backend\EdsApi\Response\RecordCollection;
-use VuFindSearch\Backend\EdsApi\Response\RecordCollectionFactory;
+use VuFindSearch\Backend\EDS\Response\RecordCollection;
+use VuFindSearch\Backend\EDS\Response\RecordCollectionFactory;
+
+use Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  *  EDS API Backend
@@ -90,6 +93,42 @@ class Backend implements BackendInterface
 	 */
 	protected $logger;
 	
+	/**
+	 * User name for EBSCO EDS API account if using UID Authentication
+	 * @var string
+	 */
+	protected $userName = null;
+	
+	/**
+	 * Password for EBSCO EDS API account if using UID Authentication
+	 * @var string
+	 */
+	protected $password = null;
+	
+	/**
+	 * Profile for EBSCO EDS API account
+	 * @var string
+	 */
+	protected $profile = null;
+	
+	/**
+	 * Whether or not to use IP Authentication for communication with the EDS API
+	 * @var boolean
+	 */
+	protected $ipAuth = false;
+	
+	/**
+	 * Organization EDS API requests are being made for
+	 * @var string
+	 */
+	protected $orgid = null;
+	
+	/**
+	 * Superior service manager.
+	 *
+	 * @var ServiceLocatorInterface
+	 */
+	protected $serviceLocator;
 	
 	/**
 	 * Constructor.
@@ -100,10 +139,16 @@ class Backend implements BackendInterface
 	 * @return void
 	 */
 	public function __construct(ApiClient $client,
-			RecordCollectionFactoryInterface $factory) {
+			RecordCollectionFactoryInterface $factory, array $account) {
 		$this->setRecordCollectionFactory($factory);
 		$this->client = $client;
 		$this->identifier   = null;
+		$this->userName = isset($account['username']) ? $account['username'] : null;
+		$this->password = isset($account['password']) ? $account['password'] : null;
+		$this->ipAuth = isset($account['ipauth']) ? $account['ipauth'] : null;
+		$this->profile = isset($account['profile']) ? $account['profile'] : null;
+		$this->orgId = isset($account['orgid']) ? $account['orgid'] : null;
+		
 	}
 		
     /**
@@ -128,8 +173,27 @@ class Backend implements BackendInterface
     	return $this->identifier;
     	
     }
+    /**
+     * Sets the superior service locator
+     * 
+     * @param ServiceLocatorInterface $serviceLocator Superior service locator
+     */
+    public function setServiceLocator($serviceLocator)
+    {
+    	$this->serviceLocator =  $serviceLocator;
+    }
 
     /**
+     * gets the superior service locator
+     * 
+     * @return ServiceLocatorInterface Superior service locator
+     */
+    public function getServiceLocator()
+    {
+    	return $this->serviceLocator;
+    }
+     
+     /**
      * Perform a search and return record collection.
      *
      * @param AbstractQuery $query  Search query
@@ -142,17 +206,32 @@ class Backend implements BackendInterface
     public function search(AbstractQuery $query, $offset, $limit,
         ParamBag $params = null) {
     	//create query parameters from VuFind data
+    	$queryString = $query->getString();
+    	$paramsString = implode('&', $params->request());
+    	$this->debugPrint("Query: $queryString, Limit: $limit, Offset: $offset, Params: $paramsString ");
+    	
+    	$authenticationToken = $this->getAuthenticationToken();
+    	$this->debugPrint("Authentication Token to use for creating session: $authenticationToken");
+    	//check to see if the profile is overriden
+    	$overrideProfile =  $params->get('profile');
+    	if(isset($overrideProfile))
+    		$this->profile = $overrideProfile;
+    	$sessionToken = $this->getSessionToken($authenticationToken);
     	$baseParams = $this->getQueryBuilder()->build($query);
+    	$paramsString = implode('&', $baseParams->request());
+    	$this->debugPrint("BaseParams: $paramsString ");
     	if (null !== $params) {
     		$baseParams->mergeWith($params);
     	}
-    	$baseParams->set('resultsperpage', $limit);
+    	$baseParams->set('resultsPerPage', $limit);
     	$page = $limit > 0 ? floor($offset / $limit) + 1 : 1;
-    	$baseParams->set('page', $page);
-    	
-    	$searchModel = $this->backendParamsToEBSCOSearchModel($baseParams);
+    	$baseParams->set('pageNumber', $page);
+
+    	$searchModel = $this->paramBagToEBSCOSearchModel($baseParams);
+    	$qs = $searchModel->convertToQueryString();
+    	$this->debugPrint("Search Model query string: $qs");
     	try {
-    		$response = $this->client->search($searchModel);
+    		$response = $this->client->search($searchModel, $authenticationToken, $sessionToken);
     	} catch (EbscoEdsApiException $e) {
     		throw new BackendException(
     				$e->getMessage(),
@@ -184,6 +263,13 @@ class Backend implements BackendInterface
     public function retrieve($id, ParamBag $params = null)
     {
     	try {
+    		$authenticationToken = $this->getAuthenticationToken();
+    		//check to see if the profile is overriden
+    		$overrideProfile =  $params->get('profile');
+    		if(isset($overrideProfile))
+    			$this->profile = $overrideProfile;
+    		$sessionToken = $this->getSessionToken($authenticationToken);
+    		
     		//not sure how $an and dbid will be coming through. could have the id be the 
     		//query string to identify the record retrieval
     		//or maybe $id = [dbid],[an]
@@ -194,10 +280,10 @@ class Backend implements BackendInterface
     					'Retrieval id is not in the correct format.'
     			);
     		}
-    		$dbid = substr($id, 0, $pos);
+    		$dbId = substr($id, 0, $pos);
 	 		$an  = substr($id, $pos+1);
-    		$highlightTerms = $params['highlight'];
-    		$response   = $this->client->retrieve($an, $dbId, $highlightTerms);
+    		$highlightTerms = '';//$params['highlight'];
+    		$response = $this->client->retrieve($an, $dbId, $highlightTerms,$authenticationToken, $sessionToken);
     	} catch (\EbscoEdsApiException $e) {
     		throw new BackendException(
     				$e->getMessage(),
@@ -205,7 +291,7 @@ class Backend implements BackendInterface
     				$e
     		);
     	}
-    	$collection = $this->createRecordCollection($response);
+    	$collection = $this->createRecordCollection(array('Records'=> $response));
     	$this->injectSourceIdentifier($collection);
     	return $collection;
     }
@@ -217,21 +303,22 @@ class Backend implements BackendInterface
      *
      * @return SearchRequestModel
      */
-    protected function backendParamsToEBSCOSearchModel(ParamBag $params)
+    protected function paramBagToEBSCOSearchModel(ParamBag $params)
     {
-    	$model = new SearchRequestModel();
-    	$params = $params->getArrayCopy();
-    
-    	// Convert the options:
+    	$params= $params->getArrayCopy();    	
+        	// Convert the options:
+        //$paramContents = explode('&', $params);
+        //$this->debugPrint("ParamBag Contents: $paramContents");
     	$options = array();
+    	// Most parameters need to be flattened from array format, but a few
+    	// should remain as arrays:
+    	$arraySettings = array('query', 'facets', 'filters', 'groupFilters', 'rangeFilters');
     	foreach ($params as $key => $param) {
-    		//PULL OUT PARAMETERS HERE AND SET THEM ON THE SEARCH REQUEST MODEL
-
-
+    		$options[$key] = in_array($key, $arraySettings) ? $param : $param[0];
     	}
-    
-    	return $model;
+    	return new SearchRequestModel($options);
     }
+ 
     /**
      * Set the record collection factory.
      *
@@ -329,6 +416,107 @@ class Backend implements BackendInterface
     protected function createRecordCollection($records)
     {
         return $this->getRecordCollectionFactory()->factory($records);
+    }
+    
+    /**
+     * Set the Logger.
+     *
+     * @param LoggerInterface $logger Logger
+     *
+     * @return void
+     */
+    public function setLogger(LoggerInterface $logger)
+    {
+    	$this->logger = $logger;
+    }
+    
+    
+    /**
+     * Obtain the authentication to use with the EDS API from cache if it exists. If not,
+     * then generate a new one.
+     *
+     * @param string $userName EBSCO EDS API username
+     * @param string $password EBSCO EDS API password
+     * @return string
+     */
+    protected function getAuthenticationToken()
+    {
+    	$token = null;
+    	if(!empty($this->ipAuth) && true == $this->ipAuth)
+    		return $token;
+    	$cache = $this->getServiceLocator()->get('VuFind\CacheManager')->getCache('object');
+    	$authTokenData = $cache->getItem('edsAuthenticationToken');
+    	$currentToken =  $authTokenData['token'];
+    	$expirationTime = $authTokenData['expiration'];
+    	$this->debugPrint("Cached Authentication data: $currentToken, expiration time: $expirationTime");
+    	//data cached should be:
+    	// 		token, expiration
+    	//check to see if the token expiration time is greater than the current time.
+    	$generateToken = true;
+    	if(null != $authTokenData)
+    	{
+    		$expirationTime = $authTokenData['expiration'];
+    		//if the token is expired or within 5 minutes of expiring,
+    		//generate a new one
+    		if( time() <= ($expirationTime - (60*5)) )
+    		{
+    			$val =  $authTokenData['token'];
+    			$this->debugPrint("Token to return: $val ");
+    			return $val;
+    		}
+    	}
+    	$username = $this->userName;
+    	$password = $this->password;
+    	$orgId = $this->orgId;
+    	if(!empty($username) && !empty($password))
+    	{
+    		$this->debugPrint("Calling Authenticate with username: $username, password: $password, orgid: $orgId ");
+    		$results = $this->client->authenticate($username, $password, $orgId);
+    		$token = $results['AuthToken'];
+    		$timeout = $results['AuthTimeout'] + time();
+    		$authTokenData = array('token' => $token, 'expiration' => $timeout);
+    		$cache->setItem('edsAuthenticationToken', $authTokenData);
+    	}
+    	return $token;
+    }
+    
+    /**
+     * Obtain the session to use with the EDS API from cache if it exists. If not,
+     * then generate a new one.
+     *
+     * @param string $authToken Authentication to use for generating a new session if necessary
+     * @return string
+     */
+    protected function getSessionToken($authToken)
+    {
+    	$cache = $this->getServiceLocator()->get('VuFind\CacheManager')->getCache('object');
+    	//TODO: REMOVE THIS!!! WE SHOULD NEVER CACHE IT. FIND OUT HOW TO PUT IT IN USER SESSION
+    	$sessionData = $cache->getItem('edsSessionData');
+    	if(!empty($sessionData))
+    		return $sessionData['token'];
+    	$isguest = $sessionData['isguest'];
+    	if(empty($isguest))
+    		$isguest='n';
+    	$results = $this->client->createSession($this->profile,  $isguest, $authToken);
+    	$sessionToken = $results['SessionToken'];
+    	$cache->setItem('edsSessionToken', array('token' => $sessionToken, 'isguest' => $isguest));
+    	return $sessionToken;
+    }
+    
+    /**
+     * Print a message if debug is enabled.
+     *
+     * @param string $msg Message to print
+     *
+     * @return void
+     */
+    protected function debugPrint($msg)
+    {
+    	if ($this->logger) {
+    		$this->logger->debug("$msg\n");
+    	} else {
+    		parent::debugPrint($msg);
+    	}
     }
 
 }

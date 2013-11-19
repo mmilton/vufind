@@ -25,7 +25,8 @@
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  */
 namespace EBSCO\EdsApi;
-
+require_once 'C:\Users\Administrator\git\vufind-git\vendor\ebsco\edsapi\Ebsco\EdsApi\Base.php';
+require_once 'C:\Users\Administrator\git\vufind-git\vendor\ebsco\edsapi\Ebsco\EdsApi\Exception.php';
 use Zend\Http\Client as Zend2HttpClient;
 use Zend\Log\LoggerAwareInterface;
 use Zend\Log\LoggerInterface;
@@ -102,6 +103,7 @@ class Zend2 extends EdsApi_REST_Base
 	{
 		parent::__construct($settings);
 		$this->client = is_object($client) ? $client : new Zend2HttpClient();
+		$this->client->setOptions(array('timeout'=>120));
 	}
 	
 	/**
@@ -138,7 +140,7 @@ class Zend2 extends EdsApi_REST_Base
         $this->client->setEncType($messageFormat);
 	    $result = $this->client->send();
 		if (!$result->isSuccess()) {
-			throw new EbscoEdsApiException($result->getBody());
+			throw new \EbscoEdsApiException($result->getBody());
 		}
 		return $result->getBody();
 	}

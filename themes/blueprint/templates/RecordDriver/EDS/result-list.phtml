@@ -1,0 +1,98 @@
+<?
+    $title = $this->driver->getItemsTitle();
+    $source = $this->driver->getItemsTitleSource();
+    $authors = $this->driver->getItemsAuthors();
+    $subjects = $this->driver->getItemsSubjects();
+    $customLinks = $this->driver->getCustomLinks();
+?>
+<link rel="stylesheet" href="/vufind/themes/blueprint/css/EDS.css" type="text/css" />
+<div class="result source<?=$this->escapeHtml($this->driver->getResourceSource())?> recordId<?=$this->driver->supportsAjaxStatus()?' ajaxItemId':''?>">
+  <input type="hidden" value="<?=$this->escapeHtml($this->driver->getUniqueID())?>" class="hiddenId" />
+  <div class="span-2">
+  	<? if ($summThumb = $this->record($this->driver)->getThumbnail()): ?>
+    	<a href="<?=$this->recordLink()->getUrl($this->driver)?>" class="_record_link">
+      	<img src="<?=$this->escapeHtml($summThumb)?>" class="summcover" alt="<?=$this->transEsc('Cover Image')?>"/>
+    	</a>
+    <? else: ?>
+    	<span class="summcover pt-icon pt-<?=$this->driver->getPubTypeId()?>"></span>
+    	<div><?=$this->driver->getPubType()?></div>
+  	<? endif; ?>
+  </div>
+  
+  <div class="span-9">
+    <div class="resultItemLine1">
+      <? if ($this->driver->getAccessLevel() == '1'): ?>
+        <?$label = "<strong>" . $this->escapeHtml($this->driver->getDbLabel()) . "</strong>";
+        ?>
+        <?=sprintf($this->transEsc('result_not_for_guests'), $label)?>
+        <br />
+         <a class="login" href="<?=$this->url('myresearch-home')?>"><strong><?=$this->transEsc('login_for_full_access')?></strong></a>
+      <? elseif (!empty($title)): ?>
+        <a href="<?=$this->recordLink()->getUrl($this->driver)?>" class="title _record_link">
+          <?=$title?>
+        </a>
+      <? endif; ?>
+    </div>
+    
+    <div class="resultItemLine2">
+      <? if (!empty($authors)): ?>
+        <p>
+          <?=$this->transEsc('by')?>
+          <?=$authors?>
+        </p>
+      <? endif; ?>
+
+      <? if (!empty($source)): ?>
+        <p>
+          <?=$this->transEsc('Published in')?>
+          <?=$source?>
+        </p>
+      <? endif; ?>
+    </div>
+    
+    <div class="resultItemLine3">
+        <cite><?=$this->driver->getItemsAbstract()?></cite>
+
+      <? if (!empty($subjects)): ?>
+        <strong><?=$this->transEsc('Subjects')?></strong>:
+        <span class="quotestart"><?=str_replace('<br />', ', ', $subjects)?></span>
+      <? endif; ?>
+    </div>
+    
+    <? if (!empty($customLinks)): ?>
+    <div class="resultItemLine4">
+      <ul class="custom-links">
+        <? foreach ($customLinks as $customLink): ?>
+        <? $url = isset($customLink['Url']) ? $customLink['Url'] : ''; 
+        	$mot = isset($customLink['MouseOverText'])? $customLink['MouseOverText'] : '';
+        	$icon = isset ($customLink['Icon']) ? $customLink['Icon'] : ''; 
+        	$name = isset($customLink['Name']) ? $customLink['Name'] : '';?>
+        <li>
+          <a href="<?=$url?>" target="_blank" title="<?=$mot?>" class="custom-link">
+            <? if ($icon): ?><img src="<?=$icon?>" /><? endif; ?><?=$name?>
+          </a>
+        </li>
+        <? endforeach; ?>
+      </ul>
+    </div>
+    <? endif; ?>
+    
+    <div class="last">
+      <? if ($this->driver->getHTMLFullTextAvailability()): ?>
+        <a href="<?= $this->recordLink()->getUrl($this->driver, 'fulltext') ?>#html" class="icon html fulltext _record_link">
+          <?=$this->transEsc('html_full_text')?>
+        </a>
+        &nbsp; &nbsp;
+      <? endif; ?>
+
+      <? if ($this->driver->getPdfAvailability()): ?>
+        <a href="<?= $this->recordLink()->getUrl($this->driver).'/PDF'; ?>" class="icon pdf fulltext">
+          <?=$this->transEsc('pdf_full_text')?>
+        </a>
+      <? endif; ?>
+    </div>
+    
+  </div>
+
+  <div class="clear"></div>
+</div>

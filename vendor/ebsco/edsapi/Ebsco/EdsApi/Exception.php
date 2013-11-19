@@ -28,11 +28,16 @@
 
 class EbscoEdsApiException extends Exception
 {	
-
-	public function __construct(array $apiErrorMessage)
+	
+	public function __construct($apiErrorMessage)
 	{
-		setApiError($apiErrorMessage);
-		parent::__construct();
+		if(is_array($apiErrorMessage)){
+			setApiError($apiErrorMessage);
+			parent::__construct();
+		}else{
+			parent::__construct($apiErrorMessage);
+		}
+		
 	}
 	/**
 	 * Error message details returned from the API

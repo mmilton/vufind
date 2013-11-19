@@ -49,37 +49,24 @@ abstract class EdsApi_REST_Base
      * EDSAPI host
      * @var string
      */
-    protected $edsApiHost = 'http://eds-api.ebscohost.com/edsapi/rest';
+    protected $edsApiHost = 'http://eas-mmilton.epnet.com/edsapi/rest';
     
     /**
      * Auth host
      * @var string
      */
-    protected $authHost = 'https://eds-api.ebscohost.com/authservice/rest';
-    
-    /**
-     * The authentication token required for communication with the api
-     * @var string
-     */
-    protected $authenticationToken;
-
+    protected $authHost = 'http://eas-mmilton.epnet.com/authservice/rest';
+ 
     /**
      * The organization id use for authentication
      * @var string
      */
     protected $orgId;
 
-    /**
-     * The session token for the current request
-     * @var string
-     */
-    protected $sessionToken = '';
-
-    /**
-     * Is the end user a guest. Valid values are 'y' or 'n'
-     * @var string
-     */
-    protected $isGuest = 'y';
+    
+    protected $accept  = 'application/json';
+    
+    protected $contentType = 'application/json';
 
 			
     /**
@@ -91,54 +78,25 @@ abstract class EdsApi_REST_Base
      * 	                       conjunction with the EDS API
      *    <ul>
      *      <li>debug - boolean to control debug mode</li>
-     *      <li>authtoken - Authentication to use for calls to the API. If 
-     *      using IP Authentication, this is not needed.</li>
-     *      <li>username -  EBSCO username for account setup for usage with 
-     *      the EDS API. This is only required for institutions using UID 
-     *      Authentication </li>
-     *      <li>password - EBSCO password for account setup for usage with the
-     *       EDS API. This is only required for institutions using UID 
-     *       Authentication </li>
      *      <li>orgid - Organization making calls to the EDS API </li>
-     *      <li>sessiontoken - SessionToken this call is associated with, is 
-     *      one exists. If not, the a profile value must be present </li>
      *     	<li>profile - EBSCO profile to use for calls to the API. </li>
-     *      <li>isguest - is the user a guest. This needs to be present if 
-     *      there is no session token present</li>
      *    </ul>
      */
     public function __construct($settings = array())
     {
-        foreach ($settings as $key => $value) 
-        {
-            switch($key)
-            {
-            	case 'debug':
-            		$this->debug = $value;
-            		break;
-            	case 'authtoken':
-            		$this->authenticationToken= $value;
-            		break;
-            	case 'username':
-            		$this->username = $value;	
-					break;
-            	case 'password':
-            		$this->password = $value;
-            		break;
-            	case 'orgid':
-            		$this->orgId = $value;
-            		break;
-            	case 'sessiontoken':
-            		$this->sessionToken = $value;
-            		break;
-            	case 'profile':
-            		$this->profile = $value;
-            		break;
-            	case 'isguest':
-            		$this->isguest = $value;
-            		break;
-            }		
-        }
+    	if(is_array($settings))
+    	{
+        	foreach ($settings as $key => $value){
+            	switch($key){
+            		case 'debug':
+            			$this->debug = $value;
+            			break;
+            		case 'orgid':
+            			$this->orgId = $value;
+            			break;
+         	   }		
+        	}
+    	}
     }
 
     /**
@@ -160,29 +118,29 @@ abstract class EdsApi_REST_Base
      *
      * @return array   
      */
-    public function info()
+    public function info($authenticationToken = null, $sessionToken = null)
     {
     	$this->debugPrint("Info");
-    	$url = $this->$edsApiHost.'/info';
-   		return $this->call($baseUrl);
+    	$url = $this->edsApiHost.'/info';
+    	$headers = $this->setTokens($authenticationToken, $sessionToken);
+   		return $this->call($baseUrl, $headers);
     }
     
     /**
      * Creates a new session 
      *
-     * @param string $profil	Profile to use 
+     * @param string $profile	Profile to use 
      * @param string $isGuest	Whether or not this sesssion will be a guest
      *                          session
      * @return array    
      */
-    public function createSession($profile = null, $isGuest = null)
-    {
-    	$this->debugPrint("Create Session for profile: $profile, guest: $isGuestToUse ");
-    	$profileToUse = isset($profile) ? $profile : $this->profile;
-    	$isGuestToUse = isset($isGuest) ? $isGuest : $this->isGuest;
-    	$qs = array('profile' => $profileToUse, 'isguest' => $isGuestToUse);
-    	$url = $edsApiHost.'/createsession';
-   		return $this->call($url, $qs);
+    public function createSession($profile = null, $isGuest = null, $authToken = null)
+    {        
+    	$this->debugPrint("Create Session for profile: $profile, guest: $isGuest, authToken: $authToken ");
+    	$qs = array('profile' => $profile, 'isguest' => $isGuest);
+    	$url = $this->edsApiHost.'/createsession';
+    	$headers = $this->setTokens($authToken, null);
+   		return $this->call($url,$headers, $qs);
     }
     
 
@@ -196,14 +154,15 @@ abstract class EdsApi_REST_Base
 	 *
      * @return array    The requested record
      */
-    public function retrieve($an, $dbId, $highlightTerms = null)
+    public function retrieve($an, $dbId, $highlightTerms = null, $authenticationToken, $sessionToken)
     {
-        $this->debugPrint("Get Record. an: $id, dbid: $dbId");
+        $this->debugPrint("Get Record. an: $an, dbid: $dbId, $highlightTerms: $highlightTerms");
         $qs = array('an' => $an, 'dbid' => $dbId);
-        if(null != $highlightTerm)
+        if(null != $highlightTerms)
         	$qs['highlightterms'] = $highlightTerms;
-        $url = $this->$edsApiHost.'/retrieve';
-	  	return $this->call($url, $qs);
+        $url = $this->edsApiHost.'/retrieve';
+        $headers = $this->setTokens($authenticationToken, $sessionToken);
+        return $this->call($url, $headers, $qs);
        
     }
 
@@ -214,13 +173,14 @@ abstract class EdsApi_REST_Base
      *
      * @return array             An array of query results as returned from the api
      */
-    public function search($query)
+    public function search($query, $authenticationToken, $sessionToken)
     {
         // Query String Parameters
         $qs = $query->convertToQueryStringParameterArray();
 		$this->debugPrint('Query: ' . print_r($qs, true));
-        $url = $this->$edsApiHost.'/search';
-        return $this->call($url, $qs);
+        $url = $this->edsApiHost.'/search';
+        $headers = $this->setTokens($authenticationToken, $sessionToken);
+        return $this->call($url, $headers, $qs);
     }
     
     /**
@@ -233,19 +193,17 @@ abstract class EdsApi_REST_Base
     public function authenticate($username = null, $password = null, $orgid = null)
     {
     	$this->debugPrint("Authenticating: username: $username, password: $password, orgid: $orgid ");
-    	$url = $this->$authHost.'/uidauth';
-    	$un = isset($username)? $username : $this->username;
-    	$pwd = isset($password) ? $password : $this->password;
+    	$url = $this->authHost.'/uidauth';
     	$org = isset($orgid) ? $orgid : $this->orgId;
     	$authInfo = array();
-     	if(isset($un))
-			  $authInfo['username'] = $un;
-     	if(isset($pwd))
-     		$authInfo['password'] = $password;
+     	if(isset($username))
+			  $authInfo['UserId'] = $username;
+     	if(isset($password))
+     		$authInfo['Password'] = $password;
      	if(isset($org))
      		$authInfo['orgid'] = $org; 		
      	$messageBody = json_encode($authInfo);
-    	return $this->call($url, null, 'POST', $messageBody);
+    	return $this->call($url, null,  null, 'POST', $messageBody);
     }
 
     /**
@@ -256,23 +214,28 @@ abstract class EdsApi_REST_Base
     protected function createQSFromArray($params)
     {
     	$queryParameters = array();
-    	foreach ($params as $key => $value) 
-    	{    			
-    		if(is_array($value))
-    		{
-    			$parameterName = $key;
-    			$isIndexed = SearchRequestModel::isParameterIndexed($parameterName);
-    			if( $isIndexed)
-    				$parameterName = SearchRequestModel::getIndexedParameterName($parameterName);
-
-    			foreach ($value as $subKey => $subValue)
+    	if(null != $params && is_array($params))
+    	{
+    		foreach ($params as $key => $value) 
+    		{    			
+    			if(is_array($value))
     			{
-					if( SearchRequestModel::isParameterIndexed($key))
+    				$parameterName = $key;
+    				$isIndexed = SearchRequestModel::isParameterIndexed($parameterName);
+    				if( $isIndexed)
+    					$parameterName = SearchRequestModel::getIndexedParameterName($parameterName);
+    				$cnt = 0;
+    				foreach ($value as $subKey => $subValue)
+    				{
+    					$cnt = $cnt + 1 ;
+						if( SearchRequestModel::isParameterIndexed($key))
+							$parameterName = $parameterName.'-'.$cnt;
 						$queryParameters[] = $parameterName.'='.urlencode($subValue);
+    				}
     			}
+    			else 
+    				$queryParameters[] = $key.'='.urlencode($value);    			
     		}
-    		else 
-    			$queryParameters[] = $key.'='.urlencode($value);    			
     	}
     	return $queryParameters;
     }
@@ -281,6 +244,7 @@ abstract class EdsApi_REST_Base
      * Submit REST Request
      *
      * @param string $baseUrl URL of service
+     * @param array  $headerParams An array of headers to add to the request
      * @param array  $params  An array of parameters for the request
      * @param string $method  The HTTP Method to use
      * @param string $message  Message to POST if $method is POST
@@ -288,22 +252,24 @@ abstract class EdsApi_REST_Base
      * @throws \EbscoEdsApiException
      * @return object         EDS API response (or an Error object).
      */
-    protected function call($baseUrl, $params = array(), $method = 'GET',
+    protected function call($baseUrl, $headerParams, $params = array(), $method = 'GET',
         $message = null, $messageFormat = ""
     ) {
-        // Build Query String Parameters
-        $queryParameters = createQSFromArray($params);
-        $queryString = implode('&', $queryParameters);
-
+        // Build Query String Parameters    	
+        $queryParameters = $this->createQSFromArray($params);
+        $queryString = '';
+        if(null != $queryParameters && !empty($queryParameters))
+        	$queryString = implode('&', $queryParameters);
+        $this->debugPrint("Querystring to use: $queryString ");
         // Build headers
         $headers = array(
             'Accept' => $this->accept,
+        	'Content-Type' => $this->contentType	
         );
-        if (0 < strlen($this->sessionToken)) {
-            $headers['x-sessionToken'] = $this->sessionToken;
-        }
-        if (0 < strlen($this->authenticationToken)) {
-        	$headers['x-authenticationToken'] = $this->authenticationToken;
+        if(null != $headerParams && !empty($headerParams))
+        {
+	        foreach($headerParams as $key => $value)
+    	        $headers[$key] = $value;
         }
 
         try{ 
@@ -314,26 +280,7 @@ abstract class EdsApi_REST_Base
         	$rethrow = true;
         	if($e->isApiError())
         	{
-        		switch ($e->getCode())
-        		{
-        			//need to decide where authentication errors should be handled
-        			//TODO: do we have enough information? if so we could handle:
-        			//104 	Auth Token Invalid 
-        			//107 	Authentication Token Missing <-- not sure this one is actually reachable anymore
-					//108 	Session Token Missing
-
-        			case 109: //Session Token Invalid
-        				if(isset($profile)){
-        					//generate a new session token, and re-call once.
-        					try{
-        						$response = $this->createSession($this->profile, $this->isGuest);
-        						if(!$isset($response['error'])){
-        							
-        						}
-        					} catch(Exception $e1){}
-        				}			
-        				break;
-        		}
+        		//TODO: Possibly some processing?
         	}
         	if(rethrow)
        			throw $e;
@@ -361,6 +308,24 @@ abstract class EdsApi_REST_Base
         	throw new EbscoEdsApiException('Unknown error processing reponse');
         }
         return $result;
+    }
+    
+    /**
+     * Populate an associative array of session and authentication parameters to send to the EDS API 
+     * 
+     * @param string $authenticationToken Authentication token to add 
+     * @param string $sessionToken 		  Session token to add
+     * 
+     * @return array Associative array of header parameters to add.
+     */
+    private function setTokens($authenticationToken = null, $sessionToken = null)
+    {
+    	$headers = array();
+    	if(!empty($authenticationToken))
+			$headers['x-authenticationToken'] = $authenticationToken;
+    	if(!empty($sessionToken))
+    		$headers['x-sessionToken'] = $sessionToken;    		
+    	return $headers;
     }
 
     /**

@@ -1,0 +1,214 @@
+<?php
+/**
+ * EDS API Results
+ *
+ * PHP version 5
+ *
+ * Copyright (C) EBSCO Industries 2013
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2,
+ * as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * @category Ebsco Industries
+ * @package  EBSCO
+ * @author   Michelle Milton <mmilton@epnet.com>
+ * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
+ */
+namespace VuFind\Search\EDS;
+
+use EBSCO\EdsApi\SearchCriteria;
+use VuFindSearch\ParamBag;
+use Zend\Log\LoggerInterface;
+
+class Results extends \VuFind\Search\Base\Results
+{
+	/**
+	 * Search criteria available for a given search
+	 * @var array
+	 */
+	protected $searchCriteria;
+
+	/**
+	 * Obtain the search criteria available for this searching session (if present)
+	 * @return SearchCriteria
+	 */
+	public function getSearchCriteria()
+	{
+		return $this->searchCriteria;
+	}
+	
+
+	/**
+	 * Support method for performAndProcessSearch -- perform a search based on the
+	 * parameters passed to the object.
+	 *
+	 * @return void
+	 */
+	protected function performSearch()
+	{
+		$query  = $this->getParams()->getQuery();
+		$limit  = $this->getParams()->getLimit();
+		$offset = $this->getStartRecord() - 1;
+		$params = $this->createBackendParameters($this->getParams());
+		$collection = $this->getSearchService()->search(
+				'EDS', $query, $offset, $limit, $params
+		);
+	
+		$this->responseFacets = $collection->getFacets();
+		$this->resultTotal = $collection->getTotal();
+	
+	
+		// Construct record drivers for all the items in the response:
+		$this->results = $collection->getRecords();
+	}
+	
+	
+	/**
+	 * Create search backend parameters for advanced features.
+	 *
+	 * @param Params $params Search parameters
+	 *
+	 * @return ParamBag
+	 */
+	protected function createBackendParameters(Params $params)
+	{
+		$backendParams = new ParamBag();
+	
+		$options = $params->getOptions();
+			 
+		// The "relevance" sort option is a VuFind reserved word; we need to make
+		// this null in order to achieve the desired effect
+		$sort = $params->getSort();
+		$finalSort = ($sort == 'relevance') ? null : $sort;
+		$backendParams->set('sort', $finalSort);
+	
+	
+		if ($options->highlightEnabled()) {
+			$backendParams->set('highlight', true);
+		}
+		/*$backendParams->set(
+				'facets',
+				$this->createBackendFacetParameters($params->getFilterList())
+		);
+		$this->createBackendFilterParameters(
+				$backendParams, $params->getFilterList()
+		);
+		*/
+		return $backendParams;
+	}
+	
+	/**
+	 * Returns the stored list of facets for the last search
+	 *
+	 * @param array $filter Array of field => on-screen description listing
+	 * all of the desired facet fields; set to null to get all configured values.
+	 *
+	 * @return array        Facets data arrays
+	 */
+	 public function getFacetList($filter = null)
+	 {
+	 	// If there is no filter, we'll use all facets as the filter:
+	 	if (is_null($filter)) {
+	 		$filter = $this->getParams()->getFacetConfig();
+	 	} else {
+	 		// If there is a filter, make sure the field names are properly
+	 		// stripped of extra parameters:
+	 		$oldFilter = $filter;
+	 		$filter = array();
+	 		foreach ($oldFilter as $key => $value) {
+	 			$key = explode(',', $key);
+	 			$key = trim($key[0]);
+	 			$filter[$key] = $value;
+	 		}
+	 	}
+	 	
+	 	
+	 	// Loop through the facets returned by EDS
+	 	$facetResult = array();
+	 	if (is_array($this->responseFacets)) {
+	 		// Get the filter list -- we'll need to check it below:
+	 		$filterList = $this->getParams()->getFilters();
+	 	
+	 		foreach ($this->responseFacets as $current) {
+	 			// The "displayName" value is actually the name of the field on
+	 			// EBSCO's side -- we'll probably need to translate this to a
+	 			// different value for actual display!
+	 			$field = $current['displayName'];
+	 	
+	 			// Is this one of the fields we want to display?  If so, do work...
+	 			if (isset($filter[$field])) {
+	 				// Should we translate values for the current facet?
+	 				$translate = in_array(
+	 						$field, $this->getOptions()->getTranslatedFacets()
+	 				);
+	 	
+	 				// Loop through all the facet values to see if any are applied.
+	 				foreach ($current['counts'] as $facetIndex => $facetDetails) {
+	 					// Is the current field negated?  If so, we don't want to
+	 					// show it -- this is currently used only for the special
+	 					// "exclude newspapers" facet:
+	 					if ($facetDetails['isNegated']) {
+	 						unset($current['counts'][$facetIndex]);
+	 						continue;
+	 					}
+	 	
+	 					// We need to check two things to determine if the current
+	 					// value is an applied filter.  First, is the current field
+	 					// present in the filter list?  Second, is the current value
+	 					// an active filter for the current field?
+	 					$orField = '~' . $field;
+	 					$itemsToCheck = isset($filterList[$field])
+	 					? $filterList[$field] : array();
+	 					if (isset($filterList[$orField])) {
+	 						$itemsToCheck += $filterList[$orField];
+	 					}
+	 					$isApplied = in_array($facetDetails['value'], $itemsToCheck);
+	 	
+	 					// Inject "applied" value into EDS results:
+	 					$current['counts'][$facetIndex]['isApplied'] = $isApplied;
+	 	
+	 					// Set operator:
+	 					$current['counts'][$facetIndex]['operator']
+	 					= $this->getParams()->getFacetOperator($field);
+	 	
+	 					// Create display value:
+	 					$current['counts'][$facetIndex]['displayText'] = $translate
+	 					? $this->translate($facetDetails['value'])
+	 					: $facetDetails['value'];
+	 				}
+	 	
+	 				// Put the current facet cluster in order based on the .ini
+	 				// settings, then override the display name again using .ini
+	 				// settings.
+	 				$i = $order[$field];
+	 				$current['label'] = $filter[$field];
+	 	
+	 				// Create a reference to counts called list for consistency with
+	 				// Solr output format -- this allows the facet recommendations
+	 				// modules to be shared between the Search and Summon modules.
+	 				$current['list'] = & $current['counts'];
+	 				$facetResult[$i] = $current;
+	 			}
+	 		}
+	 	}
+	 	ksort($facetResult);
+	 	
+	 	// Rewrite the sorted array with appropriate keys:
+	 	$finalResult = array();
+	 	foreach ($facetResult as $current) {
+	 		$finalResult[$current['displayName']] = $current;
+	 	}
+	 	
+	 	return $finalResult;
+	 }	 
+}

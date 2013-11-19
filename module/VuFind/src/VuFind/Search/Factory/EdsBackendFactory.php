@@ -29,11 +29,13 @@
 
 namespace VuFind\Search\Factory;
 
+require_once 'C:\Users\Administrator\git\vufind-git\vendor\ebsco\edsapi\Ebsco\EdsApi\Zend2.php';
+
 use EBSCO\EdsApi\Zend2 as Connector;
 use VuFindSearch\Backend\BackendInterface;
-use VuFindSearch\Backend\EdsApi\Response\RecordCollectionFactory;
-use VuFindSearch\Backend\EdsApi\QueryBuilder;
-use VuFindSearch\Backend\EdsApi\Backend;
+use VuFindSearch\Backend\EDS\Response\RecordCollectionFactory;
+use VuFindSearch\Backend\EDS\QueryBuilder;
+use VuFindSearch\Backend\EDS\Backend;
 
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\ServiceManager\FactoryInterface;
@@ -71,11 +73,18 @@ class EdsBackendFactory implements FactoryInterface
     protected $config;
 
     /**
-     * Summon configuration
+     * EDS configuration
      *
      * @var \Zend\Config\Config
      */
     protected $edsConfig;
+    
+    /**
+     * EDS Account data 
+     * @var array
+     */
+	protected $accountData;    
+    
 
     /**
      * Create the backend.
@@ -90,6 +99,7 @@ class EdsBackendFactory implements FactoryInterface
         $configReader = $this->serviceLocator->get('VuFind\Config');
         $this->config = $configReader->get('config');
         $this->edsConfig = $configReader->get('EDS');
+        $this->accountData = $this->getAccountData();
         if ($this->serviceLocator->has('VuFind\Logger')) {
             $this->logger = $this->serviceLocator->get('VuFind\Logger');
         }
@@ -107,7 +117,8 @@ class EdsBackendFactory implements FactoryInterface
      */
     protected function createBackend(Connector $connector)
     {
-        $backend = new Backend($connector, $this->createRecordCollectionFactory());
+    	$backend = new Backend($connector, $this->createRecordCollectionFactory(), $this->accountData);
+        $backend->setServiceLocator($this->serviceLocator);
         $backend->setLogger($this->logger);
         $backend->setQueryBuilder($this->createQueryBuilder());
         return $backend;
@@ -123,12 +134,16 @@ class EdsBackendFactory implements FactoryInterface
         // TODO: set up options:
         $options = array();
 
+        //TODO: DETERMINE WHAT ID AND KEY ARE 
+        $id = 'EDS';
+        $key = 'EDS';
         // Build HTTP client:
         $client = $this->serviceLocator->get('VuFind\Http')->createClient();
         $timeout = isset($this->edsConfig->General->timeout)
             ? $this->edsConfig->General->timeout : 30;
         $client->setOptions(array('timeout' => $timeout));
 
+        
         $connector = new Connector($id, $key, $options, $client);
         $connector->setLogger($this->logger);
         return $connector;
@@ -159,5 +174,33 @@ class EdsBackendFactory implements FactoryInterface
             return $driver;
         };
         return new RecordCollectionFactory($callback);
+    }
+    
+    
+    /**
+     * Set the default account data for use with the EDS API 
+     * 
+     * @return array Default account settings
+     */
+    protected function getAccountData()
+    {
+    	$accountData = array();
+    	if (isset($this->edsConfig->EBSCO_Account->user_name)) {
+    		$accountData['username'] = $this->edsConfig->EBSCO_Account->user_name;
+    	}
+    	if (isset($this->edsConfig->EBSCO_Account->password)) {
+    		$accountData['password'] = $this->edsConfig->EBSCO_Account->password;
+    	}
+    	if (isset($this->edsConfig->EBSCO_Account->ip_auth)) {
+    		$accountData['ipauth'] = $this->edsConfig->EBSCO_Account->ip_auth;
+    	}
+    	if (isset($this->edsConfig->EBSCO_Account->profile)) {
+    		$accountData['profile'] = $this->edsConfig->EBSCO_Account->profile;
+    	}
+    	if(isset($this->edsConfig->EBSCO_Account->organization_id)){
+    		$acountData['orgid'] = $this->edsConfig->EBSCO_Account->organization_id;
+    	}
+		return $accountData;    	
+    	
     }
 }
