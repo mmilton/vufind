@@ -27,7 +27,6 @@
  * @link     http://vufind.org
  */
 namespace VuFindSearch\Backend\EDS;
-require_once 'C:\Users\Administrator\git\vufind-git\vendor\ebsco\edsapi\Ebsco\EdsApi\SearchRequestModel.php';
 
 use VuFindSearch\Query\AbstractQuery;
 use VuFindSearch\Query\QueryGroup;

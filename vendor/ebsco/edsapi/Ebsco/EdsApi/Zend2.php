@@ -25,8 +25,8 @@
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  */
 namespace EBSCO\EdsApi;
-require_once 'C:\Users\Administrator\git\vufind-git\vendor\ebsco\edsapi\Ebsco\EdsApi\Base.php';
-require_once 'C:\Users\Administrator\git\vufind-git\vendor\ebsco\edsapi\Ebsco\EdsApi\Exception.php';
+require_once dirname(__FILE__) . '/Base.php';
+require_once dirname(__FILE__) . '/Exception.php';
 use Zend\Http\Client as Zend2HttpClient;
 use Zend\Log\LoggerAwareInterface;
 use Zend\Log\LoggerInterface;

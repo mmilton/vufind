@@ -26,7 +26,6 @@
  * @link     http://vufind.org   Main Site
  */
 namespace VuFind\Controller;
-require_once 'C:\Users\Administrator\git\vufind-git\vendor\ebsco\edsapi\Ebsco\EdsApi\Zend2.php';
 
 use EBSCO\EdsApi\Zend2 as EdsApi;
 /**

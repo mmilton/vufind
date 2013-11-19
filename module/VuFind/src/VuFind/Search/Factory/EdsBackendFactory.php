@@ -29,8 +29,6 @@
 
 namespace VuFind\Search\Factory;
 
-require_once 'C:\Users\Administrator\git\vufind-git\vendor\ebsco\edsapi\Ebsco\EdsApi\Zend2.php';
-
 use EBSCO\EdsApi\Zend2 as Connector;
 use VuFindSearch\Backend\BackendInterface;
 use VuFindSearch\Backend\EDS\Response\RecordCollectionFactory;

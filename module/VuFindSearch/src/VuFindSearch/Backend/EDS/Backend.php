@@ -27,7 +27,6 @@
  */
 
 namespace VuFindSearch\Backend\EDS;
-require_once 'C:\Users\Administrator\git\vufind-git\vendor\ebsco\edsapi\Ebsco\EdsApi\SearchRequestModel.php';
 
 use EBSCO\EdsApi\Zend2 as ApiClient; 
 use EBSCO\EdsApi\EdsApi_REST_Base;
