@@ -49,13 +49,13 @@ abstract class EdsApi_REST_Base
      * EDSAPI host
      * @var string
      */
-    protected $edsApiHost = 'http://eas-mmilton.epnet.com/edsapi/rest';
+    protected $edsApiHost = 'http://eds-api.ebscohost.com/edsapi/rest';
     
     /**
      * Auth host
      * @var string
      */
-    protected $authHost = 'http://eas-mmilton.epnet.com/authservice/rest';
+    protected $authHost = 'https://eds-api.ebscohost.com/authservice/rest';
  
     /**
      * The organization id use for authentication
