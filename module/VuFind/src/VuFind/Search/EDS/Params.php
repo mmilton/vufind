@@ -114,6 +114,6 @@ class Params extends \VuFind\Search\Base\Params
      */
     public function getView()
     {
-    	return 'EDS';
+    	return 'list';
     }
 }

@@ -140,7 +140,7 @@ class Zend2 extends EdsApi_REST_Base
         $this->client->setEncType($messageFormat);
 	    $result = $this->client->send();
 		if (!$result->isSuccess()) {
-			throw new \EbscoEdsApiException($result->getBody());
+			throw new \EbscoEdsApiException(json_decode($result->getBody(), true));
 		}
 		return $result->getBody();
 	}

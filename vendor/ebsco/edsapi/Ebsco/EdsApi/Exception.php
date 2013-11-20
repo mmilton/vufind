@@ -32,7 +32,7 @@ class EbscoEdsApiException extends Exception
 	public function __construct($apiErrorMessage)
 	{
 		if(is_array($apiErrorMessage)){
-			setApiError($apiErrorMessage);
+ 			$this->setApiError($apiErrorMessage);
 			parent::__construct();
 		}else{
 			parent::__construct($apiErrorMessage);
@@ -43,7 +43,7 @@ class EbscoEdsApiException extends Exception
 	 * Error message details returned from the API
 	 * @var array()
 	 */
-	protected $apiErrorDetails = null;
+	protected $apiErrorDetails = array();
 	
 	
 	/**
@@ -90,22 +90,18 @@ class EbscoEdsApiException extends Exception
 	 * Known api error code
 	 * @return array()
 	 */
-    protected function getApiErrorCode()
+    public function getApiErrorCode()
     {
-    	if(isset($apiErrorDetails)){
-    		return $this->apiErrorDetails['ErrorCode'];
-    	}
+    	return isset($this->apiErrorDetails) ? $this->apiErrorDetails['ErrorCode'] : '';
     }
 	
     /**
      * Known api error description
      * @return string
      */
-    protected function getApiErrorDescription()
+    public function getApiErrorDescription()
     {
-        if(isset($apiErrorDetails)){
-    		return $this->apiErrorDetails['Description'];
-    	}
+        return isset($this->apiErrorDetails) ? $this->apiErrorDetails['Description'] : '';
     }
     
     
@@ -113,12 +109,8 @@ class EbscoEdsApiException extends Exception
      * Known api detailed error description
      * @return string
      */
-    protected function getApiDetailedErrorDescription()
+    public function getApiDetailedErrorDescription()
     {
-        if(isset($apiErrorDetails)){
-    		return $this->apiErrorDetails['DetailedDescription'];
-    	}
-    }
-    
-	
+        return (isset($this->apiErrorDetails)) ? $this->apiErrorDetails['DetailedDescription'] : '';
+    }	
 }

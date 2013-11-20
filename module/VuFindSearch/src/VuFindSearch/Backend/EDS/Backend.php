@@ -231,15 +231,32 @@ class Backend implements BackendInterface
     	$this->debugPrint("Search Model query string: $qs");
     	try {
     		$response = $this->client->search($searchModel, $authenticationToken, $sessionToken);
-    	} catch (EbscoEdsApiException $e) {
-    		throw new BackendException(
+    	} catch (\EbscoEdsApiException $e) {
+    		//if the auth token was invalid, try once more
+    		if( $e->getApiErrorCode() == 104 )
+    		{
+    			try {
+    				$authenticationToken = $this->getAuthenticationToken(true);
+    				$response = $this->client->search($searchModel, $authenticationToken, $sessionToken);
+    			}catch(Exception $e){
+    				throw new BackendException(
     				$e->getMessage(),
     				$e->getCode(),
-    				$e
-    		);
+    				$e);
+    		
+    			}
+    		} else {
+    			$response = array();
+    		}
+    		//else
+    		//	throw $e;
+
     	}
     	catch(Exception $e)
-    	{    		throw new BackendException(
+    	{   $message = $e->getMessage();
+    		$this->debugPrint("Exception found: $message");
+    		 		
+    		throw new BackendException(
     				$e->getMessage(),
     				$e->getCode(),
     				$e
@@ -250,7 +267,7 @@ class Backend implements BackendInterface
     	$this->injectSourceIdentifier($collection);
     	return $collection;
     }
-
+    
     /**
      * Retrieve a single document.
      *
@@ -284,11 +301,21 @@ class Backend implements BackendInterface
     		$highlightTerms = '';//$params['highlight'];
     		$response = $this->client->retrieve($an, $dbId, $highlightTerms,$authenticationToken, $sessionToken);
     	} catch (\EbscoEdsApiException $e) {
-    		throw new BackendException(
+    	    if( $e->getApiErrorCode == 104 )
+    		{
+    			try {
+    				$authenticationToken = $this->getAuthenticationToken(true);
+    				$response = $this->client->retrieve($an, $dbId, $highlightTerms,$authenticationToken, $sessionToken);
+    			}catch(Exception $e){
+    				throw new BackendException(
     				$e->getMessage(),
     				$e->getCode(),
-    				$e
-    		);
+    				$e);
+    		
+    			}
+    		}
+    		else
+    			throw $e;
     	}
     	$collection = $this->createRecordCollection(array('Records'=> $response));
     	$this->injectSourceIdentifier($collection);
@@ -434,36 +461,31 @@ class Backend implements BackendInterface
      * Obtain the authentication to use with the EDS API from cache if it exists. If not,
      * then generate a new one.
      *
-     * @param string $userName EBSCO EDS API username
+     * @param bool $isInvalid whether or not the the current token is invalid
      * @param string $password EBSCO EDS API password
      * @return string
      */
-    protected function getAuthenticationToken()
+    protected function getAuthenticationToken($isInvalid = false)
     {
     	$token = null;
     	if(!empty($this->ipAuth) && true == $this->ipAuth)
     		return $token;
     	$cache = $this->getServiceLocator()->get('VuFind\CacheManager')->getCache('object');
+    	if($isInvalid)
+    		$cache->setItem('edsAuthenticationToken', null);
     	$authTokenData = $cache->getItem('edsAuthenticationToken');
-    	$currentToken =  $authTokenData['token'];
-    	$expirationTime = $authTokenData['expiration'];
-    	$this->debugPrint("Cached Authentication data: $currentToken, expiration time: $expirationTime");
-    	//data cached should be:
-    	// 		token, expiration
-    	//check to see if the token expiration time is greater than the current time.
-    	$generateToken = true;
-    	if(null != $authTokenData)
-    	{
-    		$expirationTime = $authTokenData['expiration'];
+    	if(isset($authTokenData)){
+    		$currentToken =  isset($authTokenData['token']) ? $authTokenData['token'] : ''; 
+    		$expirationTime = isset($authTokenData['expiration']) ? $authTokenData['expiration'] : 0;
+    		$this->debugPrint("Cached Authentication data: $currentToken, expiration time: $expirationTime");
+
+    		//check to see if the token expiration time is greater than the current time.
     		//if the token is expired or within 5 minutes of expiring,
     		//generate a new one
-    		if( time() <= ($expirationTime - (60*5)) )
-    		{
-    			$val =  $authTokenData['token'];
-    			$this->debugPrint("Token to return: $val ");
-    			return $val;
-    		}
+    		if( !empty($currentToken) && (time() <= ($expirationTime - (60*5))) )
+    			return $currentToken;
     	}
+    	
     	$username = $this->userName;
     	$password = $this->password;
     	$orgId = $this->orgId;
@@ -496,7 +518,30 @@ class Backend implements BackendInterface
     	$isguest = $sessionData['isguest'];
     	if(empty($isguest))
     		$isguest='n';
-    	$results = $this->client->createSession($this->profile,  $isguest, $authToken);
+    	try {
+    		$results = $this->client->createSession($this->profile,  $isguest, $authToken);
+    	}catch(\EbscoEdsApiException $e){
+    		$errorCode = $e->getApiErrorCode();
+    		$desc = $e->getApiErrorDescription();
+    		$this->debugPrint("Error in create session request. Error code: $errorCode, message: $desc");
+    		$this->debugPrint("Error is: $e");
+    		
+    		if( $e->getApiErrorCode() == 104 )
+    		{
+    			try {
+    				$authToken = $this->getAuthenticationToken(true);
+    				$results = $this->client->createSession($this->profile,  $isguest, $authToken);
+    			}catch(Exception $e){
+    				throw new BackendException(
+    						$e->getMessage(),
+    						$e->getCode(),
+    						$e);
+    		
+    			}
+    		}
+    		else
+	    		throw $e;
+    	}
     	$sessionToken = $results['SessionToken'];
     	$cache->setItem('edsSessionToken', array('token' => $sessionToken, 'isguest' => $isguest));
     	return $sessionToken;

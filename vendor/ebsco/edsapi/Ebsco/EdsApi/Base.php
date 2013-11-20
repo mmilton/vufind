@@ -49,7 +49,7 @@ abstract class EdsApi_REST_Base
      * EDSAPI host
      * @var string
      */
-    protected $edsApiHost = 'http://eds-api.ebscohost.com/edsapi/rest';
+     protected $edsApiHost = 'http://eds-api.ebscohost.com/edsapi/rest';
     
     /**
      * Auth host
@@ -271,21 +271,8 @@ abstract class EdsApi_REST_Base
 	        foreach($headerParams as $key => $value)
     	        $headers[$key] = $value;
         }
-
-        try{ 
-        	// Send and process request
-        	return $this->process(
-            	$this->httpRequest($baseUrl, $method, $queryString, $headers, $message, $messageFormat) );
-        }catch(EbscoEdsApiException $e){
-        	$rethrow = true;
-        	if($e->isApiError())
-        	{
-        		//TODO: Possibly some processing?
-        	}
-        	if(rethrow)
-       			throw $e;
-        }
- 
+        $response = $this->httpRequest($baseUrl, $method, $queryString, $headers, $message, $messageFormat);
+        return $this->process($response);
     }
 
     /**
