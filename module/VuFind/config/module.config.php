@@ -663,7 +663,7 @@ $config = array(
                 'factories' => array(
                     'eds' => function ($sm) {
                         $eds = $sm->getServiceLocator()->get('VuFind\Config')->get('EDS');
-                        $driver = new \VuFind\RecordDriver\Summon(
+                        $driver = new \VuFind\RecordDriver\EDS(
                             $sm->getServiceLocator()->get('VuFind\Config')->get('config'),
                             $eds, $eds
                         );
