@@ -30,7 +30,7 @@ require_once dirname(__FILE__) . '/Exception.php';
 use Zend\Http\Client as Zend2HttpClient;
 use Zend\Log\LoggerAwareInterface;
 use Zend\Log\LoggerInterface;
-
+use Zend\Http\Client\Adapter\Curl as CurlAdapter;
 /**
  * EBSCO EDS API Zend2 Framework implementation
  * 
@@ -103,7 +103,17 @@ class Zend2 extends EdsApi_REST_Base
 	{
 		parent::__construct($settings);
 		$this->client = is_object($client) ? $client : new Zend2HttpClient();
-		$this->client->setOptions(array('timeout'=>120));
+		$this->client->setOptions(array('timeout'=>120, ));
+		$adapter = new CurlAdapter();
+		$adapter->setOptions(array(
+				'curloptions' => array(
+						CURLOPT_SSL_VERIFYPEER => false,
+						CURLOPT_FOLLOWLOCATION => true,
+				)
+		));
+		
+		$this->client->setAdapter($adapter);
+	
 	}
 	
 	/**
