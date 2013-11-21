@@ -111,9 +111,7 @@ class Zend2 extends EdsApi_REST_Base
 						CURLOPT_FOLLOWLOCATION => true,
 				)
 		));
-		
 		$this->client->setAdapter($adapter);
-	
 	}
 	
 	/**
