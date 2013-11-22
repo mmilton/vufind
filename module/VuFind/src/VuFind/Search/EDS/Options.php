@@ -67,7 +67,11 @@ class Options extends \VuFind\Search\Base\Options
 
     protected $serviceLocator;
     
-
+    /**
+     * Available Search Options from the API
+     * @var array
+     */
+	protected $apiInfo;
     
     
     /**
@@ -81,10 +85,15 @@ class Options extends \VuFind\Search\Base\Options
         parent::__construct( $configLoader);
         $searchSettings = $configLoader->get($this->searchIni);
         //if (isset($searchSettings->General->options_from_api)) {
-			$this->setOptionsFromConfig($searchSettings);
+			//$this->setOptionsFromConfig($searchSettings);
     //    }else{
-			//$this->setOptionsFromApi($searchSettings);
-	//	}        
+        $container = new \Zend\Session\Container('EBSCO');
+        $this->apiInfo = $container->info;
+        $this->setOptionsFromApi($searchSettings);
+	//	}      
+
+
+
     }
 
     /**
@@ -138,17 +147,76 @@ class Options extends \VuFind\Search\Base\Options
     	return $this->resultLimit;
     }
 
+    //TODO: FINISH POPULATING THIS WITH VALUES FROM THE API
     /**
      * set the search options from the Eds API Info methods results
      */
     public function setOptionsFromApi()
     {
-    	//Call search with all null values
-    	$paramBag = new ParamBag();
-    	$paramBag->add('Info', 'y');
-    	//$collection = $this->getSearchService()->search(
-    	//		'EDS', null, null, null, $paramBag
-    	//);
+    	if (isset($searchSettings->General->default_limit)) {
+    		$this->defaultLimit = $searchSettings->General->default_limit;
+    	}
+    	if (isset($searchSettings->General->limit_options)) {
+    		$this->limitOptions
+    		= explode(",", $searchSettings->General->limit_options);
+    	}
+    	 
+    	// Set up highlighting preference
+    	if (isset($searchSettings->General->highlighting)) {
+    		$this->highlight = $searchSettings->General->highlighting ;
+    	}
+    	 
+    	// Load search preferences:
+    	if (isset($searchSettings->General->retain_filters_by_default)) {
+    		$this->retainFiltersByDefault
+    		= $searchSettings->General->retain_filters_by_default;
+    	}
+    	 
+    	// Search handler setup:
+    	if (isset($searchSettings->Basic_Searches)) {
+    		foreach ($searchSettings->Basic_Searches as $key => $value) {
+    			$this->basicHandlers[$key] = $value;
+    		}
+    	}
+    	if (isset($searchSettings->Advanced_Searches)) {
+    		foreach ($searchSettings->Advanced_Searches as $key => $value) {
+    			$this->advancedHandlers[$key] = $value;
+    		}
+    	}
+    	 
+    	// Sort preferences:
+
+     	$this->sortOptions = $this->populateSortOptions();
+
+    	if (isset($searchSettings->General->default_sort)) {
+    		$this->defaultSort = $searchSettings->General->default_sort;
+    	}
+    	 
+    	 
+    	// Detail amount preferences
+    	if (isset($searchSettings->Amount)) {
+    		foreach ($searchSettings->Amount as $key => $value) {
+    			$this->amountOptions[$key] = $value;
+    		}
+    	}
+    	if (isset($searchSettings->General->default_amount)) {
+    		$this->defaultAmount = $searchSettings->General->default_amount;
+    	}
+    	 
+    	// Search Mode preferences
+    	if (isset($searchSettings->Search_Modes)) {
+    		foreach ($searchSettings->Search_Modes as $key => $value) {
+    			$this->modeOptions[$key] = $value;
+    		}
+    	}
+    	if (isset($searchSettings->General->default_mode)) {
+    		$this->defaultMode = $searchSettings->General->default_mode;
+    	}
+    	 
+    	//View preferences
+    	if (isset($searchSettings->General->default_view)) {
+    		$this->defaultView = $searchSettings->General->default_view;
+    	}
     	
     }
     
@@ -225,6 +293,24 @@ class Options extends \VuFind\Search\Base\Options
     	if (isset($searchSettings->General->default_view)) {
     		$this->defaultView = $searchSettings->General->default_view;
     	}
+	}
+	
+	
+	/**
+	 * Populate sort options form the EDS API INFO method data
+	 * @return array
+	 */
+	protected function populateSortOptions()
+	{
+		
+		$sortOptions = array();
+		if(isset($this->apiInfo) && 
+			isset($this->apiInfo['AvailableSearchCriteria']) && 
+			isset($this->apiInfo['AvailableSearchCriteria']['AvailableSorts'])){
+			foreach($this->apiInfo['AvailableSearchCriteria']['AvailableSorts'] as $sort)
+				$sortOptions[$sort['Id']] = $sort['Label'];
+		}
+		return $sortOptions;
 	}
 
 }
