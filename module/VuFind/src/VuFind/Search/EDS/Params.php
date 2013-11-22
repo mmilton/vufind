@@ -25,6 +25,8 @@
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  */
 namespace VuFind\Search\EDS;
+use VuFindSearch\ParamBag;
+use EBSCO\EdsApi\SearchRequestModel;
 
 class Params extends \VuFind\Search\Base\Params
 {
@@ -46,7 +48,7 @@ class Params extends \VuFind\Search\Base\Params
         $finalSort = ($sort == 'relevance') ? null : $sort;
         $backendParams->set('sort', $finalSort);
 
-        if ($options->highlight()) {
+        if ($options->getHighlight()) {
             $backendParams->set('highlight', true);
         }
         
@@ -98,9 +100,7 @@ class Params extends \VuFind\Search\Base\Params
             // Loop through all filters and add appropriate values to request:
             foreach ($filterList as $filterArray) {
                 foreach ($filterArray as $filt) {
-                    $safeValue = SearchRequestModel::escapeSpecialCharacters($filt['value']);
-                    // Standard case:
-                    $fq = "{$filt['field']},{$safeValue}";
+                	$fq = "{$filt['value']}";
                     $params->add('filters', $fq);
                 }
             }
@@ -115,5 +115,43 @@ class Params extends \VuFind\Search\Base\Params
     public function getView()
     {
     	return 'list';
+    }
+    
+    /**
+     * Add a field to facet on.
+     *
+     * @param string $newField Field name
+     * @param string $newAlias Optional on-screen display label
+     * @param bool   $ored     Should we treat this as an ORed facet?
+     *
+     * @return void
+     */
+    public function addFacet($newField, $newAlias = null, $ored = false)
+    {
+    	// Save the full field name (which may include extra parameters);
+    	// we'll need these to do the proper search using the Summon class:
+    	if (strstr($newField, 'PublicationDate')) {
+    		// Special case -- we don't need to send this to the Summon API,
+    		// but we do need to set a flag so VuFind knows to display the
+    		// date facet control.
+    		$this->dateFacetSettings[] = 'PublicationDate';
+    	} else {
+    		$this->fullFacetSettings[] = $newField;
+    	}
+    
+    	// Field name may have parameters attached -- remove them:
+    	$parts = explode(',', $newField);
+    	return parent::addFacet($parts[0], $newAlias, $ored);
+    }
+    
+    /**
+     * Get the full facet settings stored by addFacet -- these may include extra
+     * parameters needed by the search results class.
+     *
+     * @return array
+     */
+    public function getFullFacetSettings()
+    {
+    	return isset($this->fullFacetSettings) ? $this->fullFacetSettings : array();
     }
 }

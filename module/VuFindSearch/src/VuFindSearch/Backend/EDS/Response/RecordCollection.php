@@ -78,14 +78,44 @@ class RecordCollection extends AbstractRecordCollection
     }
 
     /**
+     * Return raw available facet information.
+     *
+     * @return array
+     */
+    public function getRawFacets()
+    {
+        return isset($this->response['SearchResult']) && isset($this->response['SearchResult']['AvailableFacets'])
+            ? $this->response['SearchResult']['AvailableFacets'] : array();
+    }
+    
+    /**
      * Return available facet information.
      *
      * @return array
      */
     public function getFacets()
     {
-        return isset($this->response['SearchResults']) && isset($this->response['SearchResults']['AvailableFacets'])
-            ? $this->response['SearchResults']['AvailableFacets'] : array();
+    	$vufindFacetList = array();
+    	$facets = isset($this->response['SearchResult']) && isset($this->response['SearchResult']['AvailableFacets'])
+    						? $this->response['SearchResult']['AvailableFacets'] : array();
+    	foreach($facets as $facet)
+    	{
+    		$vufindFacet['displayName'] = $facet['Label'];
+    		$vuFindFacet['value'] = $facet['Id'];
+    		$values = array();
+			foreach($facet['AvailableFacetValues'] as $availableFacetValue)
+			{
+				$values[] = array('value' => $availableFacetValue['AddAction'],
+								'count' => $availableFacetValue['Count'],
+								'displayText' => $availableFacetValue['Value']
+								
+				);
+				
+			}
+			$vufindFacet['counts'] = $values;
+			$vufindFacetList[] = $vufindFacet;
+    	}
+    	return $vufindFacetList;
     }
     
     

@@ -122,15 +122,22 @@ class SearchRequestModel
 	
 	public function setParameters($parameters = array())
 	{
-		foreach ($parameters as $key => $value) {
+		foreach ($parameters as $key => $values) {
+			if('filters' == $key)
+			{
+				foreach($values as $filter)
+					$this->addAction($filter);
+				
+			}
 			switch($key)
 			{
 				default:
 					if (property_exists($this, $key)) {
-						$this->$key = $value;
+						$this->$key = $values;
 					}	
 			}
 		}
+		
 	}
 	
 	
@@ -323,7 +330,7 @@ class SearchRequestModel
 	 * Add a new facet filter 
 	 * @param string $facetFilter Facet Filter to add
 	 */
-	public function addFacetFilter($facetFilter)
+	public function addfilter($facetFilter)
 	{
 		$this->facetFilters[] = $facetFilter;
 	}

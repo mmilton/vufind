@@ -501,7 +501,7 @@ class EDS extends SolrDefault
     	);
     
     	//  The XML data is XML escaped, let's unescape html entities (e.g. &lt; => <)
-    	$data = html_entity_decode($data,ENT_QUOTES,"utf-8");
+    	$data = html_entity_decode($data, ENT_QUOTES, "utf-8");
     
     	// Start parsing the xml data
     	if (!empty($data)) {
@@ -542,7 +542,6 @@ class EDS extends SolrDefault
 
     	return $data; 
     }
-    
-   //TODO:: JUST RETURN THE PARAMETERS AND BUILD THE SEARCH LINK IN CORE
+
     
 }

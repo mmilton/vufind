@@ -59,7 +59,7 @@ class Results extends \VuFind\Search\Base\Results
 		$query  = $this->getParams()->getQuery();
 		$limit  = $this->getParams()->getLimit();
 		$offset = $this->getStartRecord() - 1;
-		$params = $this->createBackendParameters($this->getParams());
+		$params = $this->getParams()->getBackendParameters();
 		$collection = $this->getSearchService()->search(
 				'EDS', $query, $offset, $limit, $params
 		);
@@ -96,14 +96,14 @@ class Results extends \VuFind\Search\Base\Results
 		if ($options->highlightEnabled()) {
 			$backendParams->set('highlight', true);
 		}
-		/*$backendParams->set(
+		$backendParams->set(
 				'facets',
-				$this->createBackendFacetParameters($params->getFilterList())
+				$params->createBackendFacetParameters($params->getFilterList())
 		);
 		$this->createBackendFilterParameters(
 				$backendParams, $params->getFilterList()
 		);
-		*/
+	
 		return $backendParams;
 	}
 	
@@ -117,6 +117,9 @@ class Results extends \VuFind\Search\Base\Results
 	 */
 	 public function getFacetList($filter = null)
 	 {
+	 	//TODO: Return the list of 'Limiters' that are specified to be de
+
+/*	 	
 	 	// If there is no filter, we'll use all facets as the filter:
 	 	if (is_null($filter)) {
 	 		$filter = $this->getParams()->getFacetConfig();
@@ -131,7 +134,7 @@ class Results extends \VuFind\Search\Base\Results
 	 			$filter[$key] = $value;
 	 		}
 	 	}
-	 	
+	 	*/
 	 	
 	 	// Loop through the facets returned by EDS
 	 	$facetResult = array();
@@ -146,7 +149,7 @@ class Results extends \VuFind\Search\Base\Results
 	 			$field = $current['displayName'];
 	 	
 	 			// Is this one of the fields we want to display?  If so, do work...
-	 			if (isset($filter[$field])) {
+	 			//if (isset($filter[$field])) {
 	 				// Should we translate values for the current facet?
 	 				$translate = in_array(
 	 						$field, $this->getOptions()->getTranslatedFacets()
@@ -154,14 +157,6 @@ class Results extends \VuFind\Search\Base\Results
 	 	
 	 				// Loop through all the facet values to see if any are applied.
 	 				foreach ($current['counts'] as $facetIndex => $facetDetails) {
-	 					// Is the current field negated?  If so, we don't want to
-	 					// show it -- this is currently used only for the special
-	 					// "exclude newspapers" facet:
-	 					if ($facetDetails['isNegated']) {
-	 						unset($current['counts'][$facetIndex]);
-	 						continue;
-	 					}
-	 	
 	 					// We need to check two things to determine if the current
 	 					// value is an applied filter.  First, is the current field
 	 					// present in the filter list?  Second, is the current value
@@ -183,23 +178,29 @@ class Results extends \VuFind\Search\Base\Results
 	 	
 	 					// Create display value:
 	 					$current['counts'][$facetIndex]['displayText'] = $translate
+	 					? $this->translate($facetDetails['displayText'])
+	 					: $facetDetails['displayText'];
+	 					
+	 					// Create display value:
+	 					$current['counts'][$facetIndex]['value'] = $translate
 	 					? $this->translate($facetDetails['value'])
 	 					: $facetDetails['value'];
+	 						
 	 				}
 	 	
 	 				// Put the current facet cluster in order based on the .ini
 	 				// settings, then override the display name again using .ini
 	 				// settings.
-	 				$i = $order[$field];
-	 				$current['label'] = $filter[$field];
+	 				//$i = $order[$field];
+	 				$current['label'] = $field;
 	 	
 	 				// Create a reference to counts called list for consistency with
 	 				// Solr output format -- this allows the facet recommendations
 	 				// modules to be shared between the Search and Summon modules.
 	 				$current['list'] = & $current['counts'];
-	 				$facetResult[$i] = $current;
+	 				$facetResult[] = $current;
 	 			}
-	 		}
+	 		//}
 	 	}
 	 	ksort($facetResult);
 	 	

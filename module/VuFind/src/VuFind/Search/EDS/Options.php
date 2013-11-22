@@ -109,6 +109,13 @@ class Options extends \VuFind\Search\Base\Options
     }
     
     /**
+     * Whether or not to specify highlighting in the API
+     */
+    public function getHighlight()
+    {
+    	return $this->highlight;
+    }
+    /**
      * Return the route name of the action used for performing advanced searches.
      * Returns false if the feature is not supported.
      *
