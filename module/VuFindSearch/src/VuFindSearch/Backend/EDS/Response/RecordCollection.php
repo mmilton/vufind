@@ -100,12 +100,12 @@ class RecordCollection extends AbstractRecordCollection
     						? $this->response['SearchResult']['AvailableFacets'] : array();
     	foreach($facets as $facet)
     	{
-    		$vufindFacet['displayName'] = $facet['Label'];
+    		$vufindFacet['displayName'] = $facet['Id'];
     		$vuFindFacet['value'] = $facet['Id'];
     		$values = array();
 			foreach($facet['AvailableFacetValues'] as $availableFacetValue)
 			{
-				$values[] = array('value' => $availableFacetValue['AddAction'],
+				$values[] = array('value' => $availableFacetValue['Value'],
 								'count' => $availableFacetValue['Count'],
 								'displayText' => $availableFacetValue['Value']
 								
@@ -113,7 +113,7 @@ class RecordCollection extends AbstractRecordCollection
 				
 			}
 			$vufindFacet['counts'] = $values;
-			$vufindFacetList[] = $vufindFacet;
+			$vufindFacetList[$facet['Id']] = $vufindFacet;
     	}
     	return $vufindFacetList;
     }

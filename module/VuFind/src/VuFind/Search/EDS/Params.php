@@ -100,8 +100,10 @@ class Params extends \VuFind\Search\Base\Params
             // Loop through all filters and add appropriate values to request:
             foreach ($filterList as $filterArray) {
                 foreach ($filterArray as $filt) {
-                	$fq = "{$filt['value']}";
-                    $params->add('filters', $fq);
+                	$safeValue = SearchRequestModel::escapeSpecialCharacters($filt['value']);
+					// Standard case:
+					$fq = "{$filt['field']}:{$safeValue}";
+                	$params->add('filters', $fq);
                 }
             }
         }
