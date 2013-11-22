@@ -539,7 +539,12 @@ class Backend implements BackendInterface
     	if (!$isInvalid && !empty($container->sessionID)) 
     		$sessionToken = $container->sessionID;
     	else 
+    	{
     		$sessionToken = $this->createEBSCOSession();
+    		//When creating a new session, also call the INFO mehtod to pull the available search
+    		//criteria for this profile
+    		$this->createSearchCriteria($sessionToken);
+    	}
 
     	$this->debugPrint("SessionToken to use: $sessionToken");
     	return $sessionToken;
@@ -597,7 +602,6 @@ class Backend implements BackendInterface
     						$e->getMessage(),
     						$e->getCode(),
     						$e);
-    
     			}
     		}
     		else
@@ -606,5 +610,52 @@ class Backend implements BackendInterface
     	$sessionToken = $results['SessionToken'];
     	return $sessionToken;
     }
+    
+    /**
+     * Obtain data from the INFO method
+     * @param unknown $params
+     */
+    public function getInfo($sessionToken = null ){
+    	$authenticationToken = $this->getAuthenticationToken();
+    	if(null == $sessionToken)
+    		$sessionToken = $this->getSessionToken();
+    	try {
+    		$response = $this->client->info( $authenticationToken, $sessionToken);
+    	} catch (\EbscoEdsApiException $e) {
+    		if( $e->getApiErrorCode() == 104 )
+    		{
+    			try {
+    				$authenticationToken = $this->getAuthenticationToken(true);
+    				$response = $this->client->info($searchModel, $authenticationToken, $sessionToken);
+    			}catch(Exception $e){
+    				throw new BackendException(
+    						$e->getMessage(),
+    						$e->getCode(),
+    						$e);
+    				 
+    			}
+    		} else {
+    			$response = array();
+    		}
+    	}
+    	return $response;
+    	 
+    }
+    
+    /**
+     * Obtain available search criteria from the info method and store it in the session container
+     * 
+	 *@param string $sessionToken Session token to use to call the INFO method. 
+     *@return array 
+	*/
+    protected function createSearchCriteria($sessionToken){
+
+    	$container = new \Zend\Session\Container('EBSCO');
+    	$info = $this->getInfo($sessionToken);
+    	$container->info = $info;
+    	return $container->info;
+    }
+    
+    
 
 }
