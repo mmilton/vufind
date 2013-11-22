@@ -101,15 +101,6 @@ class EdsController extends AbstractSearch
     	return $this->resultsAction();
     }
 
-    /**
-     * Obtains the session token
-     * 
-     */
-	public function getSessionToken()
-	{
-		$sessId = $this->getServiceLocator()->get('VuFind\SessionManager')->getId();
-	}    
-
 	
 	/**
      * Return a Search Results object containing advanced facet information.  This

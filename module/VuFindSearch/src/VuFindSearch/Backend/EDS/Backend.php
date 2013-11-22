@@ -210,12 +210,9 @@ class Backend implements BackendInterface
     	$this->debugPrint("Query: $queryString, Limit: $limit, Offset: $offset, Params: $paramsString ");
     	
     	$authenticationToken = $this->getAuthenticationToken();
-    	$this->debugPrint("Authentication Token to use for creating session: $authenticationToken");
-    	//check to see if the profile is overriden
-    	$overrideProfile =  $params->get('profile');
-    	if(isset($overrideProfile))
-    		$this->profile = $overrideProfile;
-    	$sessionToken = $this->getSessionToken($authenticationToken);
+    	$sessionToken = $this->getSessionToken();
+    	$this->debugPrint("Authentication Token: $authenticationToken, SessionToken: $sessionToken");
+    	 
     	$baseParams = $this->getQueryBuilder()->build($query);
     	$paramsString = implode('&', $baseParams->request());
     	$this->debugPrint("BaseParams: $paramsString ");
@@ -245,7 +242,18 @@ class Backend implements BackendInterface
     				$e);
     		
     			}
-    		} else {
+    		}else if (108 == $e->getApiErrorCode() || 109 == $e->getApiErrorCode() ) {
+    			try {
+    			$sessionToken = $this->getSessionToken(true);
+    			$response = $this->client->search($searchModel, $authenticationToken, $sessionToken);
+    			}catch(Exception $e){
+    				throw new BackendException(
+    						$e->getMessage(),
+    						$e->getCode(),
+    						$e);
+    			
+    			}
+    		}else {
     			$response = array();
     		}
     		//else
@@ -284,7 +292,7 @@ class Backend implements BackendInterface
     		$overrideProfile =  $params->get('profile');
     		if(isset($overrideProfile))
     			$this->profile = $overrideProfile;
-    		$sessionToken = $this->getSessionToken($authenticationToken);
+    		$sessionToken = $this->getSessionToken();
     		
     		//not sure how $an and dbid will be coming through. could have the id be the 
     		//query string to identify the record retrieval
@@ -500,52 +508,7 @@ class Backend implements BackendInterface
     	}
     	return $token;
     }
-    
-    /**
-     * Obtain the session to use with the EDS API from cache if it exists. If not,
-     * then generate a new one.
-     *
-     * @param string $authToken Authentication to use for generating a new session if necessary
-     * @return string
-     */
-    protected function getSessionToken($authToken)
-    {
-    	$cache = $this->getServiceLocator()->get('VuFind\CacheManager')->getCache('object');
-    	//TODO: REMOVE THIS!!! WE SHOULD NEVER CACHE IT. FIND OUT HOW TO PUT IT IN USER SESSION
-    	$sessionData = $cache->getItem('edsSessionData');
-    	if(!empty($sessionData))
-    		return $sessionData['token'];
-    	$isguest = $sessionData['isguest'];
-    	if(empty($isguest))
-    		$isguest='n';
-    	try {
-    		$results = $this->client->createSession($this->profile,  $isguest, $authToken);
-    	}catch(\EbscoEdsApiException $e){
-    		$errorCode = $e->getApiErrorCode();
-    		$desc = $e->getApiErrorDescription();
-    		$this->debugPrint("Error in create session request. Error code: $errorCode, message: $desc");
-    		$this->debugPrint("Error is: $e");
-    		
-    		if( $e->getApiErrorCode() == 104 )
-    		{
-    			try {
-    				$authToken = $this->getAuthenticationToken(true);
-    				$results = $this->client->createSession($this->profile,  $isguest, $authToken);
-    			}catch(Exception $e){
-    				throw new BackendException(
-    						$e->getMessage(),
-    						$e->getCode(),
-    						$e);
-    		
-    			}
-    		}
-    		else
-	    		throw $e;
-    	}
-    	$sessionToken = $results['SessionToken'];
-    	$cache->setItem('edsSessionToken', array('token' => $sessionToken, 'isguest' => $isguest));
-    	return $sessionToken;
-    }
+
     
     /**
      * Print a message if debug is enabled.
@@ -561,6 +524,87 @@ class Backend implements BackendInterface
     	} else {
     		parent::debugPrint($msg);
     	}
+    }
+    
+    
+    /**
+     * Obtain the session token from the Session container. If it doesn't exist, generate a new one.
+     *@param boolean $isInvalid If a session token is invalid, generate a new one regardless of what is in the session container 
+     *
+     */
+    public function getSessionToken($isInvalid = false)
+    {
+    	$sessionToken = '';
+    	$container = new \Zend\Session\Container('EBSCO');
+    	if (!$isInvalid && !empty($container->sessionID)) 
+    		$sessionToken = $container->sessionID;
+    	else 
+    		$sessionToken = $this->createEBSCOSession();
+
+    	$this->debugPrint("SessionToken to use: $sessionToken");
+    	return $sessionToken;
+    }
+    
+    /**
+     * Generate a new session token and store it in the Session container.
+     * 
+     */
+    protected function createEBSCOSession()
+    {
+    	//If the user is not logged in, the treat them as a guest
+    	$isGuest = 'y';
+    	$container = new \Zend\Session\Container('EBSCO');
+    
+    	//if there is no profile passed, use the one set in the configuration file
+    	$profile = $this->profile;
+    	if(null == $profile)
+    	{
+    		$config = $this->getServiceLocator()->get('VuFind\Config')->get('EDS');
+    		if (isset($config->EBSCO_Account->profile)) {
+    			$profile = $config->EBSCO_Account->profile;
+    		}
+    	}
+    	$session = $this->createSession($isGuest, $profile);
+    	$container->sessionID = $session;
+    	$container->profileID = $profile;
+    	return $container->sessionID;
+    
+    }
+    
+    /**
+     * Obtain the session to use with the EDS API from cache if it exists. If not,
+     * then generate a new one.
+     *
+     * @param string $authToken Authentication to use for generating a new session if necessary
+     * @return string
+     */
+    public function createSession($isGuest = 'y', $profile='')
+    {
+    	try {
+    		$authToken = $this->getAuthenticationToken();
+    		$results = $this->client->createSession($profile,  $isGuest, $authToken);
+    	}catch(\EbscoEdsApiException $e){
+    		$errorCode = $e->getApiErrorCode();
+    		$desc = $e->getApiErrorDescription();
+    		$this->debugPrint("Error in create session request. Error code: $errorCode, message: $desc, e: $e");
+    		if( $e->getApiErrorCode() == 104 )
+    		{
+    			try {
+    				$authToken = $this->getAuthenticationToken(true);
+    				$results = $this->client->createSession($this->profile,  $isguest, $authToken);
+    			}catch(Exception $e){
+    				throw new BackendException(
+    						$e->getMessage(),
+    						$e->getCode(),
+    						$e);
+    
+    			}
+    		}
+    		else
+    			throw $e;
+    	}
+    	$sessionToken = $results['SessionToken'];
+    	return $sessionToken;
     }
 
 }
