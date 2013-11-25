@@ -120,14 +120,30 @@ class SearchRequestModel
 		$this->setParameters($parameters);
 	}
 	
+	
+	/**
+	 * Set properties from parameters
+	 * 
+	 * @param array $parameters
+	 */
 	public function setParameters($parameters = array())
 	{
 		foreach ($parameters as $key => $values) {
 			if('filters' == $key)
 			{
-				foreach($values as $filter)
-					$this->addAction($filter);
-				
+				$cnt = 1;
+				foreach($values as $filter){
+					if(substr($filter,0,6) == 'LIMIT|')
+						$this->addLimiter(substr($filter,6));
+					else if(substr($filter,0,9) == 'EXPANDER|'){
+						//TODO: This needs to be an array!
+						//Need to remove the ':' appended to the end.
+						$this->expander = substr($filter,9,-1);
+					}else {
+						$this->addfilter("$cnt,$filter");
+						$cnt++;
+					}
+				}			
 			}
 			switch($key)
 			{

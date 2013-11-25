@@ -30,6 +30,29 @@ use EBSCO\EdsApi\SearchRequestModel;
 
 class Params extends \VuFind\Search\Base\Params
 {
+	/**
+	 * Selected expanders 
+	 * @var array
+	 */
+	protected $expanders;
+
+	/**
+	 * Selected limiters
+	 * @var unknown
+	 */
+	protected $limiters;
+	
+	/**
+	 * View to send to the API
+	 * @var unknown
+	 */
+	protected $view;
+	
+	/**
+	 * Search Mode (any, all...)
+	 */
+	protected $searchMode;
+	
 	
     /**
      * Create search backend parameters for advanced features.
@@ -52,7 +75,9 @@ class Params extends \VuFind\Search\Base\Params
             $backendParams->set('highlight', true);
         }
         
-        $backendParams->set('facets', $this->getBackendFacetParameters());
+        //$backendParams->set('facets', $this->getBackendFacetParameters());
+        $this->addLimitersAsCheckboxFacets($options);
+        $this->addExpandersAsCheckboxFacets($options);
         $this->createBackendFilterParameters($backendParams);
 
         return $backendParams;
@@ -156,4 +181,33 @@ class Params extends \VuFind\Search\Base\Params
     {
     	return isset($this->fullFacetSettings) ? $this->fullFacetSettings : array();
     }
+    
+    /**
+     * Populate common limiters as checkbox facets
+     * @param unknown $options
+     */
+	public function addLimitersAsCheckboxFacets($options)
+	{
+		$ssLimiters = $options->getSearchScreenLimiters();
+		if(isset($ssLimiters)){
+			foreach($ssLimiters as $key => $ssLimiter)
+				$this->addCheckboxFacet($ssLimiter['selectedvalue'], $ssLimiter['description']);
+			
+		}	
+	}	
+	
+	/**
+	 * Populate expanders as checkbox facets
+	 * @param unknown $options
+	 */
+	public function addExpandersAsCheckboxFacets($options)
+	{
+		$availableExpanders = $options->getSearchScreenExpanders();
+		if(isset($availableExpanders)){
+			foreach($availableExpanders as $key => $expander)
+				$this->addCheckboxFacet($expander['selectedvalue'], $expander['description']);
+				
+		}
+	}
+	
 }

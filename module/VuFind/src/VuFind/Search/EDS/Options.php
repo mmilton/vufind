@@ -76,13 +76,6 @@ class Options extends \VuFind\Search\Base\Options
      * @var unknown
      */
     protected $expanderOptions = array();
-
-    
-    /**
-     * Default limiters to apply
-     * @var array
-     */
-    protected $defaultLimiters = array();
     
     /**
      * Available limiter options
@@ -90,6 +83,12 @@ class Options extends \VuFind\Search\Base\Options
     */
     protected $limiterOptions = array();
     
+    /**
+     * Wheither or not to return available facets with the search response
+     * @var unknown
+     */
+	protected $includeFacets = 'y';
+	    
     protected $serviceLocator;
     
     /**
@@ -98,6 +97,19 @@ class Options extends \VuFind\Search\Base\Options
      */
 	protected $apiInfo;
     
+	/**
+	 * Limiters to display on the basic search screen 
+	 * 
+	 * @var array
+	 */
+    protected $commonLimiters = array();
+    
+    /**
+     * Expanders to display on the basic search screen
+     *
+     * @var array
+     */
+    protected $commonExpanders = array();
     
     /**
      * Constructor
@@ -201,6 +213,11 @@ class Options extends \VuFind\Search\Base\Options
     		$this->highlight = $searchSettings->General->highlighting ;
     	}
     	
+    	// Set up facet preferences 
+    	if (isset($searchSettings->General->highlighting)) {
+    		$this->includeFacets = $searchSettings->General->include_facets ;
+    	}
+    	 
     	// Load search preferences:
     	if (isset($searchSettings->General->retain_filters_by_default)) {
     		$this->retainFiltersByDefault
@@ -260,7 +277,40 @@ class Options extends \VuFind\Search\Base\Options
     	if (isset($searchSettings->General->default_view)) {
     		$this->defaultView = $searchSettings->General->default_view;
     	}
-	}
+    	
+    	//Only the common limiters that are valid limiters for this profile
+    	//will be used
+    	if(isset($searchSettings->General->common_limiters)){
+    		$commonLimiters = $searchSettings->General->common_limiters;
+    		if(isset($commonLimiters)){
+    			$cLimiters = explode(',',$commonLimiters);    
+    			
+    			if(!empty($cLimiters) && isset($this->limiterOptions) && !empty($this->limiterOptions))
+    			{
+    				foreach($cLimiters as $cLimiter){
+    					if(isset($this->limiterOptions[$cLimiter]))
+    						$this->commonLimiters[] = $cLimiter;
+    				}
+    	    	}			
+    		}
+    	}	
+    	
+    	//Only the common expanders that are valid expanders for this profile
+    	//will be used
+    	if(isset($searchSettings->General->common_expanders)){
+    		$commonExpanders= $searchSettings->General->common_expanders;
+    		if(isset($commonExpanders)){
+    			$cExpanders = explode(',',$commonExpanders);
+    			if(!empty($cExpanders) && isset($this->expanderOptions) && !empty($this->expanderOptions))
+    			{
+    				foreach($cExpanders as $cExpander){
+    					if(isset($this->expanderOptions[$cExpander]))
+    						$this->commonExpanders[] = $cExpander;
+    				}
+    			}
+    		}
+    	}
+    }
 	
 	/**
 	 * Populate available search criteria from the EDS API Info method
@@ -309,16 +359,15 @@ class Options extends \VuFind\Search\Base\Options
 				}
 				
 				//Limiters
-				$this->availableLimiters= array();
-				$this->defaultLimiters = array();
+				$this->limiterOptions= array();
 				if(isset($this->apiInfo['AvailableSearchCriteria']['AvailableLimiters'])){
 					foreach($this->apiInfo['AvailableSearchCriteria']['AvailableLimiters'] as $limiter){
-						$this->availableLimiters[$limiter['Id']] = array('Label' => $limiter['Label'],
+						$this->limiterOptions[$limiter['Id']] = array('Label' => $limiter['Label'],
 								'Type' => $limiter['Type'],
 								'LimiterValues' => (isset($limiter['Values'])) ? populateLimiterValues($limiter['Values']) : null,
+								'DefaultOn' => (isset($limiter['DefaultOn'])) ? $limiter['DefaultOn'] : 'n',
 						);
-						if(isset($limiter['DefaultOn']) && 'y' == $limiter['DefaultOn'])
-							$this->defaultLimiters[] = $limiter['Id'];
+
 					}
 					
 				}
@@ -367,5 +416,40 @@ class Options extends \VuFind\Search\Base\Options
 				$this->defaultAmount = 'brief';
 			$this->amountOptions = array('brief', 'title', 'detailed');
 			
+	}
+	/**
+	 * Obtain limiters to display ont the basic search screen
+	 * @return array
+	 */
+	public function getSearchScreenLimiters()
+	{
+		$ssLimiterOptions = array(); 
+		if(isset($this->commonLimiters)){
+			foreach($this->commonLimiters as $key){			
+				$limiter = $this->limiterOptions[$key] ;
+				$ssLimiterOptions[$key] = array( 'selectedvalue' => 'LIMIT|'.$key.':y',
+												 'description' => $limiter['Label'],
+												 'selected' => ('y' == $limiter['DefaultOn'])? true : false);
+			}
+		}
+		return $ssLimiterOptions;
+	}
+	
+	/**
+	 * Obtain expanders to display on the basic search screen
+	 * @return array
+	 */
+	public function getSearchScreenExpanders()
+	{		
+		$ssExpanderOptions = array(); 
+		if(isset($this->commonExpanders)){
+			foreach($this->commonExpanders as $key){			
+				$expander = $this->expanderOptions[$key];
+				$ssExpanderOptions[$key] = array( 'selectedvalue' => 'EXPANDER|'.$key,
+												 'description' => $expander,
+												 'selected' =>(isset($defaultExpander[$key]))? true : false);
+			}
+		}
+		return $ssExpanderOptions;		
 	}
 }

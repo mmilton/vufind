@@ -123,7 +123,7 @@ abstract class EdsApi_REST_Base
     	$this->debugPrint("Info");
     	$url = $this->edsApiHost.'/info';
     	$headers = $this->setTokens($authenticationToken, $sessionToken);
-   		return $this->call($baseUrl, $headers);
+   		return $this->call($url, $headers);
     }
     
     /**
