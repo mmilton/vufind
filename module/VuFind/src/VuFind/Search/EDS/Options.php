@@ -362,9 +362,13 @@ class Options extends \VuFind\Search\Base\Options
 				$this->limiterOptions= array();
 				if(isset($this->apiInfo['AvailableSearchCriteria']['AvailableLimiters'])){
 					foreach($this->apiInfo['AvailableSearchCriteria']['AvailableLimiters'] as $limiter){
-						$this->limiterOptions[$limiter['Id']] = array('Label' => $limiter['Label'],
+						$val = '';
+						if('select' == $limiter['Type'])
+							$val = 'y';
+						$this->limiterOptions[$limiter['Id']] = array('Id' => $limiter['Id'],
+								'Label' => $limiter['Label'],
 								'Type' => $limiter['Type'],
-								'LimiterValues' => (isset($limiter['Values'])) ? populateLimiterValues($limiter['Values']) : null,
+								'LimiterValues' => (isset($limiter['LimiterValues'])) ? $this->populateLimiterValues($limiter['LimiterValues']) : array(array('Value' => $val)),
 								'DefaultOn' => (isset($limiter['DefaultOn'])) ? $limiter['DefaultOn'] : 'n',
 						);
 
@@ -380,16 +384,26 @@ class Options extends \VuFind\Search\Base\Options
 	 * @param array $limiterValues Limiter values from the API
 	 * @return array
 	 */
-	protected function populateLimitersValues($limiterValues)
+	protected function populateLimiterValues($limiterValues)
 	{
 		$availableLimiterValues = array();
 		if(isset($limiterValues)){
 			foreach($limiterValues as $limiterValue){
 				$availableLimiterValues[] = array( 'Value' => $limiterValue['Value'],
-			 									   'LimiterValues' => isset($limiterValue['LimiterValues']) ? populateLimiterValues($limiterValue['LimiterValues']) : null);
+			 									   'LimiterValues' => isset($limiterValue['LimiterValues']) ? $this->populateLimiterValues($limiterValue['LimiterValues']) : null);
 			}
 		}
 		return empty($availableLimiterValues) ? null : $availableLimiterValues;
+	}
+	
+	/**
+	 * Returns the available limters
+	 * 
+	 * @return array
+	 */
+	public function getAvailableLimiters()
+	{
+		return $this->limiterOptions;
 	}
 	
 	
@@ -445,7 +459,7 @@ class Options extends \VuFind\Search\Base\Options
 		if(isset($this->commonExpanders)){
 			foreach($this->commonExpanders as $key){			
 				$expander = $this->expanderOptions[$key];
-				$ssExpanderOptions[$key] = array( 'selectedvalue' => 'EXPANDER|'.$key,
+				$ssExpanderOptions[$key] = array('selectedvalue' => 'EXPANDER|'.$key,
 												 'description' => $expander,
 												 'selected' =>(isset($defaultExpander[$key]))? true : false);
 			}

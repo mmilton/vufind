@@ -136,7 +136,7 @@ class SearchRequestModel
 					if(substr($filter,0,6) == 'LIMIT|')
 						$this->addLimiter(substr($filter,6));
 					else if(substr($filter,0,9) == 'EXPANDER|'){
-						//TODO: This needs to be an array!
+						//TODO: This needs to be an array.
 						//Need to remove the ':' appended to the end.
 						$this->expander = substr($filter,9,-1);
 					}else {

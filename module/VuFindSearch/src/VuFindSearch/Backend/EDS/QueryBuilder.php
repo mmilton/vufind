@@ -76,13 +76,15 @@ class QueryBuilder
 	 *
 	 * @return string
 	 */
-	protected function queryToEdsQuery(Query $query)
+	protected function queryToEdsQuery(Query $query, $operator = 'AND')
 	{
 		$expression = str_replace('"', '', $query->getString());
 		$expression = SearchRequestModel::escapeSpecialCharacters($expression);
 		$fieldCode = ($query->getHandler() == 'AllFields')? '' : $query->getHandler();  //fieldcode
 		if(!empty($fieldCode))
 			$expression = $fieldCode.':'.$expression;
+		if(!empty($operator))
+			$expression = $operator.','.$expression;
 		return $expression;
 	}
 	
@@ -114,11 +116,9 @@ class QueryBuilder
 	 */
 	protected function queryGroupToArray(QueryGroup $query)
 	{
-		return array();
+		//return array();
 		//NEED TO DETERMINE WHETHER OR NOT WE ARE DOING ADVANCED SEARCH QUERIES THE SAME....
-		/*
-		$groups = $excludes = array();
-	
+		$groups =  array();
 		foreach ($query->getQueries() as $params) {
 			// Advanced Search
 			if ($params instanceof QueryGroup) {
@@ -126,33 +126,16 @@ class QueryBuilder
 				// Process each search group
 				foreach ($params->getQueries() as $group) {
 					// Build this group individually as a basic search
-					$thisGroup[] = $this->abstractQueryToString($group);
-				}
-				// Is this an exclusion (NOT) group or a normal group?
-				if ($params->isNegated()) {
-					$excludes[] = join(" OR ", $thisGroup);
-				} else {
-					$groups[]
-					= join(" ".$params->getOperator()." ", $thisGroup);
+					$grp  = $this->queryToEdsQuery($group, $params->getOperator());
+					$groups[] = $grp;
+					//$this->debugPrint("Abstract Query: $grp ");
 				}
 			} else {
 				// Basic Search
-				$groups[] = $this->queryToString($params);
+				$groups[] = $this->queryToEdsQuery($params);
 			}
 		}
-	
-		// Put our advanced search together
-		$queryStr = '';
-		if (count($groups) > 0) {
-			$queryStr
-			.= "(" . join(") " . $query->getOperator() . " (", $groups) . ")";
-		}
-		// and concatenate exclusion after that
-		if (count($excludes) > 0) {
-			$queryStr .= " NOT ((" . join(") OR (", $excludes) . "))";
-		}
-	
-		return $queryStr;
-		*/
+		return $groups;
+		
 	}
 }

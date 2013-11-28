@@ -205,7 +205,7 @@ class Backend implements BackendInterface
     public function search(AbstractQuery $query, $offset, $limit,
         ParamBag $params = null) {
     	//create query parameters from VuFind data
-    	$queryString = $query->getString();
+    	$queryString = !empty($query) ? $query->getAllTerms() : '';
     	$paramsString = implode('&', $params->request());
     	$this->debugPrint("Query: $queryString, Limit: $limit, Offset: $offset, Params: $paramsString ");
     	

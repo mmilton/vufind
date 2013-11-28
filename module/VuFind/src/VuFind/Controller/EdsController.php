@@ -70,10 +70,9 @@ class EdsController extends AbstractSearch
     {
         // Standard setup from base class:
         $view = parent::advancedAction();
-
         // Set up facet information:
         $view->facetList = $this->processAdvancedFacets(
-            $this->getAdvancedFacets()->getFacetList(), $view->saved
+            $this->getAdvancedFacets(), $view->saved
         );
 
         return $view;
@@ -110,50 +109,34 @@ class EdsController extends AbstractSearch
      */
     protected function getAdvancedFacets()
     {
-        // Check if we have facet results cached, and build them if we don't.
-        $cache = $this->getServiceLocator()->get('VuFind\CacheManager')
-            ->getCache('object');
-        if (!($results = $cache->getItem('edsSearchAdvancedFacets'))) {
-            $config = $this->getServiceLocator()->get('VuFind\Config')
-                ->get('EDS');
-            $limit = isset($config->Advanced_Facet_Settings->facet_limit)
+    	//VuFind facets are what the EDS API calls limtiers. Available limiters
+    	//are returned with a call to the EDS API Info method and are cached. 
+    	//Since they are obtained from a seperate call, there is no need to call search
+    	
+        // Check if we have facet results stored in session. Build them if we don't.
+        //pull them from the session cache
+  	
+    	$config = $this->getServiceLocator()->get('VuFind\Config')->get('EDS');
+    	$results = $this->getResultsManager()->get('EDS');
+    	$params = $results->getParams();
+    	$options = $params->getOptions();
+    	$availableLimiters = $options->getAvailableLimiters();
+    	
+        $limit = isset($config->Advanced_Facet_Settings->facet_limit)
                 ? $config->Advanced_Facet_Settings->facet_limit : 100;
-            $results = $this->getResultsManager()->get('EDS');
-            $params = $results->getParams();
-            $facetsToShow = isset($config->Advanced_Facets)
-                 ? $config->Advanced_Facets
-                 : array(); // TODO -- set reasonable default
-            if (isset($config->Advanced_Facet_Settings->orFacets)) {
-                $orFields = array_map(
-                    'trim', explode(',', $config->Advanced_Facet_Settings->orFacets)
-                );
-            } else {
-                $orFields = array();
-            }
-            foreach ($facetsToShow as $facet => $label) {
-                /* TODO: add proper facet format
-                $params->addFacet(
-                    $facet . ',or,1,' . $limit, $label,
-                    $orFields[0] == '*' || in_array($facet, $orFields)
-                );
-                 */
-            }
-
-            // We only care about facet lists, so don't get any results:
-            $params->setLimit(0);
-
-            // force processing for cache
-            $results->getResults();
-
-            $cache->setItem('edsSearchAdvancedFacets', $results);
+        //filter the available limtiers
+        
+        //TODO: If there are any facets set here, there will be validated with the list and displayed
+        //if this is absent, then all facts(limiters) will be displayed
+        $limitersToShow = isset($config->Advanced_Facets) ? $config->Advanced_Facets : array(); // TODO -- set reasonable default
+        
+        foreach ($limitersToShow as $facet => $label) {
+                /* TODO: filter list */
         }
 
-        // Restore the real service locator to the object (it was lost during
-        // serialization):
-        $results->restoreServiceLocator($this->getServiceLocator());
-        return $results;
+        return $availableLimiters;
     }
-
+        
     /**
      * Return a Search Results object containing homepage facet information.  This
      * data may come from the cache.
@@ -178,25 +161,25 @@ class EdsController extends AbstractSearch
     {
         // Process the facets, assuming they came back
         foreach ($facetList as $facet => $list) {
-            foreach ($list['list'] as $key => $value) {
-                // Build the filter string for the URL:
-                $fullFilter = ($value['operator'] == 'OR' ? '~' : '')
-                    . $facet.':"'.$value['value'].'"';
+        	if(isset($list['LimiterValues']))
+        	{
+            	foreach ($list['LimiterValues'] as $key => $value) {
+                	// Build the filter string for the URL:
+                	$fullFilter = $facet.':"'.$value['Value'].'"';
 
-                // If we haven't already found a selected facet and the current
-                // facet has been applied to the search, we should store it as
-                // the selected facet for the current control.
-                if ($searchObject
-                    && $searchObject->getParams()->hasFilter($fullFilter)
-                ) {
-                    $facetList[$facet]['list'][$key]['selected'] = true;
-                    // Remove the filter from the search object -- we don't want
-                    // it to show up in the "applied filters" sidebar since it
-                    // will already be accounted for by being selected in the
-                    // filter select list!
-                    $searchObject->getParams()->removeFilter($fullFilter);
-                }
-            }
+                	// If we haven't already found a selected facet and the current
+                	// facet has been applied to the search, we should store it as
+                	// the selected facet for the current control.
+                	if ($searchObject && $searchObject->getParams()->hasFilter($fullFilter) ) {
+                    	$facetList[$facet]['LimiterValues'][$key]['selected'] = true;
+                    	// Remove the filter from the search object -- we don't want
+                   	 	// it to show up in the "applied filters" sidebar since it
+                   	 	// will already be accounted for by being selected in the
+                    	// filter select list!
+                    	$searchObject->getParams()->removeFilter($fullFilter);
+               	 	}
+            	}	
+        	}
         }
         return $facetList;
     }

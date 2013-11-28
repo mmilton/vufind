@@ -228,9 +228,10 @@ abstract class EdsApi_REST_Base
     				foreach ($value as $subKey => $subValue)
     				{
     					$cnt = $cnt + 1 ;
+    					$finalParameterName = $parameterName;
 						if( SearchRequestModel::isParameterIndexed($key))
-							$parameterName = $parameterName.'-'.$cnt;
-						$queryParameters[] = $parameterName.'='.urlencode($subValue);
+							$finalParameterName = $parameterName.'-'.$cnt;
+						$queryParameters[] = $finalParameterName.'='.urlencode($subValue);
     				}
     			}
     			else 
