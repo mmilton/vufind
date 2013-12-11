@@ -1489,10 +1489,10 @@ class SolrDefault extends AbstractBase
      *
      * @return string
      */
-    public function Title()
+    public function getSortTitle()
     {
-        return isset($this->fields['title_sort'])
-            ? $this->fields['title_sort'] : parent::Title();
+        return isset($this->fields['title_sort']) 
+        ? $this->fields['title_sort'] : parent::getSortTitle();
     }
 
     /**
