@@ -74,8 +74,8 @@
       </tr>
     <? endif; ?>
 
-    <? $fullText = $this->driver->getHtmlFullText();
-    	if ($fullText): ?>
+    <?if ($this->driver->getHTMLFullTextAvailability()): 
+    	$fullText = $this->driver->getHtmlFullText();?>
       <tr id="html" valign="top">
         <td colspan="2" style="padding:10px 0; border: 0">
           <?=$fullText?>
