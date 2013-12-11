@@ -71,9 +71,11 @@ class EdsController extends AbstractSearch
         // Standard setup from base class:
         $view = parent::advancedAction();
         // Set up facet information:
-        $view->facetList = $this->processAdvancedFacets(
+        $view->limiterList = $this->processAdvancedFacets(
             $this->getAdvancedFacets(), $view->saved
         );
+        $view->expanderList = $this->processAdvancedExpanders($view->saved);
+        $view->searchModes = $this->processAdvancedSearchModes($view->saved);
 
         return $view;
     }
@@ -125,15 +127,7 @@ class EdsController extends AbstractSearch
         $limit = isset($config->Advanced_Facet_Settings->facet_limit)
                 ? $config->Advanced_Facet_Settings->facet_limit : 100;
         //filter the available limtiers
-        
-        //TODO: If there are any facets set here, there will be validated with the list and displayed
-        //if this is absent, then all facts(limiters) will be displayed
-        $limitersToShow = isset($config->Advanced_Facets) ? $config->Advanced_Facets : array(); // TODO -- set reasonable default
-        
-        foreach ($limitersToShow as $facet => $label) {
-                /* TODO: filter list */
-        }
-
+       
         return $availableLimiters;
     }
         
@@ -165,23 +159,82 @@ class EdsController extends AbstractSearch
         	{
             	foreach ($list['LimiterValues'] as $key => $value) {
                 	// Build the filter string for the URL:
-                	$fullFilter = $facet.':"'.$value['Value'].'"';
+                	$fullFilter = $facet.':'.$value['Value'];
 
                 	// If we haven't already found a selected facet and the current
                 	// facet has been applied to the search, we should store it as
                 	// the selected facet for the current control.
-                	if ($searchObject && $searchObject->getParams()->hasFilter($fullFilter) ) {
+                	if ($searchObject && $searchObject->getParams()->hasFilter('LIMIT|'.$fullFilter) ) {
                     	$facetList[$facet]['LimiterValues'][$key]['selected'] = true;
                     	// Remove the filter from the search object -- we don't want
                    	 	// it to show up in the "applied filters" sidebar since it
                    	 	// will already be accounted for by being selected in the
                     	// filter select list!
-                    	$searchObject->getParams()->removeFilter($fullFilter);
+                    	$searchObject->getParams()->removeFilter('LIMIT|'.$fullFilter);
                	 	}
             	}	
         	}
         }
         return $facetList;
+    }
+    
+    /**
+     * Process the expanders to be used on the Advanced Search screen.
+     *
+     * @param array  $facetList    The advanced facet values
+     * @param object $searchObject Saved search object (false if none)
+     *
+     * @return array               Sorted facets, with selected values flagged.
+     */
+    protected function processAdvancedExpanders($searchObject = false)
+    {
+    	$config = $this->getServiceLocator()->get('VuFind\Config')->get('EDS');
+    	$results = $this->getResultsManager()->get('EDS');
+    	$params = $results->getParams();
+    	$options = $params->getOptions();
+    	$availableExpanders = $options->getAvailableExpanders();
+    	// Process the facets, assuming they came back
+    	foreach ($availableExpanders as $key => $value) {;
+   			if ($searchObject && $searchObject->getParams()->hasFilter('EXPAND:'.$value['Value']) ) {
+    				$availableExpanders[$key]['selected'] = true;
+    				// Remove the filter from the search object -- we don't want
+    				// it to show up in the "applied filters" sidebar since it
+    				// will already be accounted for by being selected in the
+    				// filter select list!
+    				$searchObject->getParams()->removeFilter('EXPAND:'.$value['Value']);
+    			}
+    		}
+    		
+    	return $availableExpanders;
+    }
+    
+    /**
+     * Process the search modes to be used on the Advanced Search screen.
+     *
+     * @param object $searchObject Saved search object (false if none)
+     *
+     * @return array               search modes with selected values flagged.
+     */
+    protected function processAdvancedSearchModes($searchObject = false)
+    {
+    	$config = $this->getServiceLocator()->get('VuFind\Config')->get('EDS');
+    	$results = $this->getResultsManager()->get('EDS');
+    	$params = $results->getParams();
+    	$options = $params->getOptions();
+    	$searchModes = $options->getModeOptions();
+    	// Process the facets, assuming they came back
+    	foreach ($searchModes as $key => $mode) {;
+    		if ($searchObject && $searchObject->getParams()->hasFilter('SEARCHMODE:'.$mode['Value']) ) {
+    			$searchModes[$key]['selected'] = true;
+    			// Remove the filter from the search object -- we don't want
+    			// it to show up in the "applied filters" sidebar since it
+    			// will already be accounted for by being selected in the
+    			// filter select list!
+    			$searchObject->getParams()->removeFilter('SEARCHMODE:'.$mode['Value']);
+    		}
+    	}
+   
+    	return $searchModes;
     }
  
 }

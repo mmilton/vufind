@@ -21,14 +21,14 @@
     	if ($pdfLink): ?>
       <li>
         <a href="<?=$pdfLink?>" class="icon pdf fulltext">
-          <?=$this->transEsc('pdf_full_text')?>
+          <?=$this->transEsc('PDF Full Text')?>
         </a>
       </li>
     <? endif; ?>
     <? if ($this->driver->getHTMLFullTextAvailability()): ?>
       <li>
         <a href="<?=$this->recordLink()->getUrl($this->driver, 'fulltext')?>#html" class="icon html fulltext">
-          <?=$this->transEsc('html_full_text')?>
+          <?=$this->transEsc('HTML Full Text')?>
         </a>
       </li>
     <? endif; ?>

@@ -1,10 +1,4 @@
-<?
-    $title = $this->driver->getItemsTitle();
-    $source = $this->driver->getItemsTitleSource();
-    $authors = $this->driver->getItemsAuthors();
-    $subjects = $this->driver->getItemsSubjects();
-    $customLinks = $this->driver->getCustomLinks();
-?>
+
 <link rel="stylesheet" href="/vufind/themes/blueprint/css/EDS.css" type="text/css" />
 <div class="result source<?=$this->escapeHtml($this->driver->getResourceSource())?> recordId<?=$this->driver->supportsAjaxStatus()?' ajaxItemId':''?>">
   <input type="hidden" value="<?=$this->escapeHtml($this->driver->getUniqueID())?>" class="hiddenId" />
@@ -20,46 +14,28 @@
   </div>
   
   <div class="span-9">
-    <div class="resultItemLine1">
-      <? if ($this->driver->getAccessLevel() == '1'): ?>
-        <?$label = "<strong>" . $this->escapeHtml($this->driver->getDbLabel()) . "</strong>";
-        ?>
-        <?=sprintf($this->transEsc('result_not_for_guests'), $label)?>
-        <br />
-         <a class="login" href="<?=$this->url('myresearch-home')?>"><strong><?=$this->transEsc('login_for_full_access')?></strong></a>
-      <? elseif (!empty($title)): ?>
-        <a href="<?=$this->recordLink()->getUrl($this->driver)?>" class="title _record_link">
-          <?=$title?>
-        </a>
-      <? endif; ?>
-    </div>
-    
-    <div class="resultItemLine2">
-      <? if (!empty($authors)): ?>
-        <p>
-          <?=$this->transEsc('by')?>
-          <?=$authors?>
-        </p>
-      <? endif; ?>
+  	<?	$items  =  $this->driver->getItems();
+  		if (isset($items) && !empty($items)) :
+  	  		foreach ($items as $item): 
+  	  			if (!empty($item)): ?>
+	  	  			<div class="resultItemLine1">
+  		  				<?if('Ti' == $item['Group']): ?>
+							<a href="<?=$this->recordLink()->getUrl($this->driver)?>" class="title _record_link" >
+          					<?=$item['Data']?> </a>
+						<?else:?>
+        				<p>
+          					<b><?=$this->transEsc($item['Label'])?>:</b>
+          					<?=$item['Data']?>
+        				</p>
+        				<?endif;?>
+        			</div>
+      			<? endif;
+      		endforeach;
+     	endif; ?>
 
-      <? if (!empty($source)): ?>
-        <p>
-          <?=$this->transEsc('Published in')?>
-          <?=$source?>
-        </p>
-      <? endif; ?>
-    </div>
     
-    <div class="resultItemLine3">
-        <cite><?=$this->driver->getItemsAbstract()?></cite>
-
-      <? if (!empty($subjects)): ?>
-        <strong><?=$this->transEsc('Subjects')?></strong>:
-        <span class="quotestart"><?=str_replace('<br />', ', ', $subjects)?></span>
-      <? endif; ?>
-    </div>
-    
-    <? if (!empty($customLinks)): ?>
+    <? $customLinks = $this->driver->getCustomLinks();
+    if (!empty($customLinks)): ?>
     <div class="resultItemLine4">
       <ul class="custom-links">
         <? foreach ($customLinks as $customLink): ?>
@@ -80,14 +56,14 @@
     <div class="last">
       <? if ($this->driver->getHTMLFullTextAvailability()): ?>
         <a href="<?= $this->recordLink()->getUrl($this->driver, 'fulltext') ?>#html" class="icon html fulltext _record_link">
-          <?=$this->transEsc('html_full_text')?>
+          <?=$this->transEsc('HTML Full Text')?>
         </a>
         &nbsp; &nbsp;
       <? endif; ?>
 
       <? if ($this->driver->getPdfAvailability()): ?>
         <a href="<?= $this->recordLink()->getUrl($this->driver).'/PDF'; ?>" class="icon pdf fulltext">
-          <?=$this->transEsc('pdf_full_text')?>
+          <?=$this->transEsc('PDF Full Text')?>
         </a>
       <? endif; ?>
     </div>

@@ -112,6 +112,12 @@ class Options extends \VuFind\Search\Base\Options
     protected $commonExpanders = array();
     
     /**
+     * Default search results view
+     * @var string
+     */
+    protected $defaultView;
+
+    /**
      * Constructor
      *
      * @return void
@@ -139,6 +145,17 @@ class Options extends \VuFind\Search\Base\Options
     }
     
     /**
+     * Get the default search mode
+     *
+     * @access public
+     * @return string
+     */
+    public function getDefaultMode()
+    {
+    	return $this->defaultMode;
+    }
+    
+    /**
      * Return the route name for the search results action.
      *
      * @return string
@@ -148,6 +165,15 @@ class Options extends \VuFind\Search\Base\Options
     	return 'eds-search';
     }
     
+    /**
+     * Return the view associated with this configuration
+     *
+     * @return string
+     */
+    public function getView()
+    {
+    	return $this->defaultView;
+    }
     /**
      * Whether or not to specify highlighting in the API
      */
@@ -278,6 +304,13 @@ class Options extends \VuFind\Search\Base\Options
     		$this->defaultView = $searchSettings->General->default_view;
     	}
     	
+    	
+    	if (isset($searchSettings->Advanced_Facet_Settings->special_facets)) {
+    		$this->specialAdvancedFacets
+    		= $searchSettings->Advanced_Facet_Settings->special_facets;
+    	}
+    	 
+    	
     	//Only the common limiters that are valid limiters for this profile
     	//will be used
     	if(isset($searchSettings->General->common_limiters)){
@@ -341,7 +374,7 @@ class Options extends \VuFind\Search\Base\Options
 				$this->modeOptions = array();
 				if(isset($this->apiInfo['AvailableSearchCriteria']['AvailableSearchModes'])){
 					foreach($this->apiInfo['AvailableSearchCriteria']['AvailableSearchModes'] as $mode){
-						$this->modeOptions[$mode['Mode']] = $mode['Label'];
+						$this->modeOptions[$mode['Mode']] = array('Label'=>$mode['Label'], 'Value' => $mode['Mode']);
 						if(isset($mode['DefaultOn']) &&  'y' == $mode['DefaultOn'])
 							$this->defaultMode = $mode['Mode'];
 					}
@@ -352,7 +385,7 @@ class Options extends \VuFind\Search\Base\Options
 				$this->defaultExpanders = array();
 				if(isset($this->apiInfo['AvailableSearchCriteria']['AvailableExpanders'])){
 					foreach($this->apiInfo['AvailableSearchCriteria']['AvailableExpanders'] as $expander){
-						$this->expanderOptions[$expander['Id']] = $expander['Label'];
+						$this->expanderOptions[$expander['Id']] = array('Label' => $expander['Label'], 'Value' => $expander['Id']);
 						if(isset($expander['DefaultOn']) && 'y' == $expander['DefaultOn']) 
 							$this->defaultExpanders[] =  $expander['Id'];
 					}
@@ -406,6 +439,15 @@ class Options extends \VuFind\Search\Base\Options
 		return $this->limiterOptions;
 	}
 	
+	/**
+	 * Returns the available expanders
+	 *
+	 * @return array
+	 */
+	public function getAvailableExpanders()
+	{
+		return $this->expanderOptions;
+	}
 	
 	/**
 	 * Sets the view settings from EDS API info method call data
@@ -459,11 +501,39 @@ class Options extends \VuFind\Search\Base\Options
 		if(isset($this->commonExpanders)){
 			foreach($this->commonExpanders as $key){			
 				$expander = $this->expanderOptions[$key];
-				$ssExpanderOptions[$key] = array('selectedvalue' => 'EXPANDER|'.$key,
-												 'description' => $expander,
+				$ssExpanderOptions[$key] = array('selectedvalue' => 'EXPAND:'.$key,
+												 'description' => $expander['Label'],
 												 'selected' =>(isset($defaultExpander[$key]))? true : false);
 			}
 		}
-		return $ssExpanderOptions;		
+		return $ssExpanderOptions;	
 	}
+	
+	/**
+	 * Obtain extra filters that are configured to display on the search screen
+	 * 
+	 * @return array
+	 */
+	/*
+	public function getSearchScreenFilters()
+	{
+		//set expanders
+		$ssExpanderOptions = array();
+		if(isset($this->commonExpanders)){
+			foreach($this->commonExpanders as $key){
+				if(isset($this->expanderOptions[$key]))
+					$ssExpanderOptions[$key] =  $this->expanderOptions[$key];
+			}
+		}
+		//set limiters
+		$ssLimiterOptions = array();
+		if(isset($this->commonLimiters)){
+			foreach($this->commonLimiters as $key){
+				if(isset($this->limiterOptions[$key]))
+					$ssLimiterOptions[$key] =  $this->limiterOptions[$key];
+			}
+		}
+		return array('expanders' => $ssExpanderOptions, 'limiters' => $ssLimiterOptions);
+	}
+	*/
 }

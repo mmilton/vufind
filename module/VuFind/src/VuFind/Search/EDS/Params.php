@@ -31,28 +31,31 @@ use EBSCO\EdsApi\SearchRequestModel;
 class Params extends \VuFind\Search\Base\Params
 {
 	/**
-	 * Selected expanders 
+	 * Settings for the date facet only
+	 *
 	 * @var array
 	 */
-	protected $expanders;
-
-	/**
-	 * Selected limiters
-	 * @var unknown
-	 */
-	protected $limiters;
+	protected $dateFacetSettings = array();
 	
 	/**
-	 * View to send to the API
-	 * @var unknown
+	 * Additional filters to display as side facets
+	 * 
+	 * @var array
 	 */
-	protected $view;
+	protected $extraFilterList = array();
 	
 	/**
-	 * Search Mode (any, all...)
+	 * Pull the search parameters
+	 *
+	 * @param \Zend\StdLib\Parameters $request Parameter object representing user
+	 * request.
+	 *
+	 * @return void
 	 */
-	protected $searchMode;
-	
+	public function initFromRequest($request)
+	{
+		parent::initFromRequest($request);
+	}
 	
     /**
      * Create search backend parameters for advanced features.
@@ -75,10 +78,15 @@ class Params extends \VuFind\Search\Base\Params
             $backendParams->set('highlight', true);
         }
         
-        //$backendParams->set('facets', $this->getBackendFacetParameters());
-        $this->addLimitersAsCheckboxFacets($options);
-        $this->addExpandersAsCheckboxFacets($options);
-        $this->createBackendFilterParameters($backendParams);
+        $view = $options->getView();
+        if(isset($view))
+        	$backendParams->set('view', $view);
+        
+        $mode= $options->getDefaultMode();
+        if(isset($mode))
+        	$backendParams->set('searchMode', $mode);
+     
+        $this->createBackendFilterParameters($backendParams, $options);
 
         return $backendParams;
     }
@@ -114,10 +122,10 @@ class Params extends \VuFind\Search\Base\Params
      * Set up filters based on VuFind settings.
      *
      * @param ParamBag $params Parameter collection to update
-     *
+     * @param Options $options Options from which to add extra filter parameters
      * @return void
      */
-    public function createBackendFilterParameters(ParamBag $params)
+    public function createBackendFilterParameters(ParamBag $params, Options $options)
     {
         // Which filters should be applied to our query?
         $filterList = $this->getFilterList();
@@ -132,8 +140,68 @@ class Params extends \VuFind\Search\Base\Params
                 }
             }
         }
+        $this->addLimitersAsCheckboxFacets($options);
+        $this->addExpandersAsCheckboxFacets($options);
     }
+    
+    /**
+     * Set up limiter based on VuFind settings.
+     *
+     * @param ParamBag $params Parameter collection to update
+     *
+     * @return void
+     */
+    public function createBackendLimiterParameters(ParamBag $params)
+    {
+    	//group limiters with same id together
+		$edsLimiters = array();
+    	foreach($this->limiters as $limiter){
+    		if(isset($limiter) &&!empty($limiter)){
+    			//split the id/value
+    			$pos = strpos($limiter, ':');
+    			$key =  substr($limiter, 0, $pos);
+    			$value = substr($limiter, $pos + 1);
+    			$value = SearchRequestModel::escapeSpecialCharacters($value);
+    			if(!isset($edsLimiters[$key]))
+    				$edsLimiters[$key] = $value;
+    			else 
+    				$edsLimiters[$key] = $edsLimiters[$key].','.$value;
+    		}
+    	}    		
+    	if(!empty($edsLimiters)){
+    		foreach ($edsLimiters as $key => $value){
+    			$params->add('limiters', $key.':'.$value);
+    		}
+    	}
+    }
+    
+
 	
+    /**
+     * Set up expanders based on VuFind settings.
+     *
+     * @param ParamBag $params Parameter collection to update
+     *
+     * @return void
+     */
+    public function createBackendExpanderParameters(ParamBag $params)
+    {
+    	// Which filters should be applied to our query?
+    	if (!empty($this->expanders)) {
+    		// Loop through all filters and add appropriate values to request:
+    		$value = '';
+    		foreach ($this->expanders as $expander) {
+				if(!empty($value))
+					$value = $value.','.$expander;
+				else 
+					$value = $expander;
+    		}
+    		if(!empty($value))
+	    		$params->add('expander', $value);
+    	}
+    }
+    
+
     /**
      * Return the value for which search view we use
      *
@@ -158,7 +226,7 @@ class Params extends \VuFind\Search\Base\Params
     	// Save the full field name (which may include extra parameters);
     	// we'll need these to do the proper search using the Summon class:
     	if (strstr($newField, 'PublicationDate')) {
-    		// Special case -- we don't need to send this to the Summon API,
+    		// Special case -- we don't need to send this to the EDS API,
     		// but we do need to set a flag so VuFind knows to display the
     		// date facet control.
     		$this->dateFacetSettings[] = 'PublicationDate';
@@ -182,19 +250,89 @@ class Params extends \VuFind\Search\Base\Params
     	return isset($this->fullFacetSettings) ? $this->fullFacetSettings : array();
     }
     
-    /**
-     * Populate common limiters as checkbox facets
-     * @param unknown $options
-     */
+
+	
+	
+	/**
+	 * Expanders specified as querystring parameters
+	 *
+	 * @param string $expander
+	 */
+    /*
+	protected function addExpander($expander)
+	{
+		$this->expanders[] = $expander;
+	}
+	*/
+	/**
+	 * Whether or not a given expander is present
+	 *
+	 * @param string $expander
+	 */
+	/*
+	 public function hasExpander($expander)
+	{
+		return isset($this->expanders[$expander]) ? true : false;
+	}
+	*/
+	/**
+	 * Apply applied limiters
+	 *
+	 * @param \Zend\StdLib\Parameters $request Parameter object representing user
+	 * request.
+	 *
+	 * @return string
+	 */
+	protected function initExpanders($request)
+	{
+		$vfExpanders= $request->get('expander');
+		if (!empty($vfExpanders)) {
+			if (is_array($vfExpanders)) {
+				foreach ($vfExpanders as $current) {
+					$this->addExpander($current);
+				}
+			} else {
+				$this->addExpander($vfExpanders);
+			}
+		}
+	}
+	
+	/**
+	 * Get a user-friendly string to describe the provided facet field.
+	 *
+	 * @param string $field Facet field name.
+	 *
+	 * @return string       Human-readable description of field.
+	 */
+	public function getFacetLabel($field)
+	{
+		return isset($field) ? $field : "Other";
+	}
+	
+	/**
+	 * Get the date facet settings stored by addFacet.
+	 *
+	 * @return array
+	 */
+	public function getDateFacetSettings()
+	{
+		return $this->dateFacetSettings;
+	}
+	
+
+	/**
+	 * Populate common limiters as checkbox facets
+	 * @param unknown $options
+	 */
 	public function addLimitersAsCheckboxFacets($options)
 	{
 		$ssLimiters = $options->getSearchScreenLimiters();
 		if(isset($ssLimiters)){
 			foreach($ssLimiters as $key => $ssLimiter)
 				$this->addCheckboxFacet($ssLimiter['selectedvalue'], $ssLimiter['description']);
-			
-		}	
-	}	
+				
+		}
+	}
 	
 	/**
 	 * Populate expanders as checkbox facets
@@ -206,8 +344,9 @@ class Params extends \VuFind\Search\Base\Params
 		if(isset($availableExpanders)){
 			foreach($availableExpanders as $key => $expander)
 				$this->addCheckboxFacet($expander['selectedvalue'], $expander['description']);
-				
+	
 		}
 	}
+	
 	
 }

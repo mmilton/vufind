@@ -67,45 +67,23 @@ class Results extends \VuFind\Search\Base\Results
 		$this->responseFacets = $collection->getFacets();
 		$this->resultTotal = $collection->getTotal();
 	
+		// Add fake date facets if flagged earlier; this is necessary in order
+		// to display the date range facet control in the interface.
+		//$dateFacets = $this->getParams()->getDateFacetSettings();
+		//if (!empty($dateFacets)) {
+		//	foreach ($dateFacets as $dateFacet) {
+				$this->responseFacets[] = array(
+						'fieldName' => 'PublicationDate',
+						'displayName' => 'PublicationDate',
+						'counts' => array()
+				);
+		//	}
+	//	}
 	
 		// Construct record drivers for all the items in the response:
 		$this->results = $collection->getRecords();
 	}
 	
-	
-	/**
-	 * Create search backend parameters for advanced features.
-	 *
-	 * @param Params $params Search parameters
-	 *
-	 * @return ParamBag
-	 */
-	protected function createBackendParameters(Params $params)
-	{
-		$backendParams = new ParamBag();
-	
-		$options = $params->getOptions();
-			 
-		// The "relevance" sort option is a VuFind reserved word; we need to make
-		// this null in order to achieve the desired effect
-		$sort = $params->getSort();
-		$finalSort = ($sort == 'relevance') ? null : $sort;
-		$backendParams->set('sort', $finalSort);
-	
-	
-		if ($options->highlightEnabled()) {
-			$backendParams->set('highlight', true);
-		}
-		$backendParams->set(
-				'facets',
-				$params->createBackendFacetParameters($params->getFilterList())
-		);
-		$this->createBackendFilterParameters(
-				$backendParams, $params->getFilterList()
-		);
-	
-		return $backendParams;
-	}
 	
 	/**
 	 * Returns the stored list of facets for the last search
@@ -116,26 +94,7 @@ class Results extends \VuFind\Search\Base\Results
 	 * @return array        Facets data arrays
 	 */
 	 public function getFacetList($filter = null)
-	 {
-	 	//TODO: Return the list of 'Limiters' that are specified to be de
-
-/*	 	
-	 	// If there is no filter, we'll use all facets as the filter:
-	 	if (is_null($filter)) {
-	 		$filter = $this->getParams()->getFacetConfig();
-	 	} else {
-	 		// If there is a filter, make sure the field names are properly
-	 		// stripped of extra parameters:
-	 		$oldFilter = $filter;
-	 		$filter = array();
-	 		foreach ($oldFilter as $key => $value) {
-	 			$key = explode(',', $key);
-	 			$key = trim($key[0]);
-	 			$filter[$key] = $value;
-	 		}
-	 	}
-	 	*/
-	 	
+	 {	
 	 	// Loop through the facets returned by EDS
 	 	$facetResult = array();
 	 	if (is_array($this->responseFacets)) {
@@ -200,7 +159,6 @@ class Results extends \VuFind\Search\Base\Results
 	 				$current['list'] = & $current['counts'];
 	 				$facetResult[] = $current;
 	 			}
-	 		//}
 	 	}
 	 	ksort($facetResult);
 	 	

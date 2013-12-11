@@ -75,7 +75,7 @@ class SearchRequestModel
 	 * Expanders to use. Comma seperated.
 	 * @var string
 	 */
-	protected $expander;
+	protected $expanders = array();
 	
 	/**
 	 * Requested level of detail to return the results with
@@ -129,24 +129,23 @@ class SearchRequestModel
 	public function setParameters($parameters = array())
 	{
 		foreach ($parameters as $key => $values) {
-			if('filters' == $key)
-			{
-				$cnt = 1;
-				foreach($values as $filter){
-					if(substr($filter,0,6) == 'LIMIT|')
-						$this->addLimiter(substr($filter,6));
-					else if(substr($filter,0,9) == 'EXPANDER|'){
-						//TODO: This needs to be an array.
-						//Need to remove the ':' appended to the end.
-						$this->expander = substr($filter,9,-1);
-					}else {
-						$this->addfilter("$cnt,$filter");
-						$cnt++;
-					}
-				}			
-			}
 			switch($key)
 			{
+				case 'filters':
+					$cnt = 1;
+					foreach($values as $filter){
+						if(substr($filter,0,6) == 'LIMIT|')
+							$this->addLimiter(substr($filter,6));
+						else if(substr($filter, 0, 7) == 'EXPAND:')
+							$this->addExpander(substr($filter,7));
+						else if(substr($filter,0,11) == 'SEARCHMODE:')
+							$this->searchMode = substr($filter,11);
+						else {
+							$this->addFilter("$cnt,$filter");
+							$cnt++;
+						}
+					}			
+					break;
 				default:
 					if (property_exists($this, $key)) {
 						$this->$key = $values;
@@ -182,6 +181,11 @@ class SearchRequestModel
 			for ($x=0; $x<sizeof($this->limiters); $x++)
 				$qs .= 'limiter='.$this->limiters[$x].'&';
 		}
+
+		if(isset($this->expanders) && 0 < sizeof($this->expanders)){
+			$expand = implode(",",$this->expanders);
+			$qs .= 'expander='.$expand.'&';
+		}
 		
 		if(isset($this->includeFacets))
 			$qs .= 'includefacets='.$this->includeFacets.'&';;
@@ -191,9 +195,6 @@ class SearchRequestModel
 		
 		if(isset($this->searchMode))
 			$qs .= 'searchmode='.$this->searchMode.'&';
-		
-		if(isset($this->expander))
-			$qs .= 'expander='.$this->expander.'&';
 		
 		if(isset($this->view))
 			$qs .= 'view='.$this->view.'&';
@@ -258,8 +259,8 @@ class SearchRequestModel
 		if(isset($this->searchMode))
 			$qs['searchmode'] = $this->searchMode;
 	
-		if(isset($this->expander))
-			$qs['expander'] = $this->expander;
+		if(isset($this->expanders) && 0 < sizeof($this->expanders))
+			$qs['expander'] = implode(",",$this->expanders);
 	
 		if(isset($this->view))
 			$qs['view'] = $this->view;
@@ -340,6 +341,16 @@ class SearchRequestModel
 	public function addLimiter($limiter)
 	{
 		$this->limiters[] = $limiter;
+	}
+	
+	
+	/**
+	 * Add a new expander
+	 * @param string $expander Expander to add
+	 */
+	public function addExpander($expander)
+	{
+		$this->expanders[] = $expander;
 	}
 	
 	/**

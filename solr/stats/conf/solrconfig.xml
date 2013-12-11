@@ -37,7 +37,8 @@
   <!-- Used to specify an alternate directory to hold all index data
        other than the default ./data under the Solr home.
        If replication is in use, this should match the replication configuration. -->
-  <dataDir>${solr.solr.home:./solr}/stats</dataDir>
+    <dataDir>c:/Users/Administrator/git/vufind-git/solr/stats</dataDir>
+
 
   
   <indexConfig>
