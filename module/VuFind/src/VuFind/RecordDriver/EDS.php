@@ -442,6 +442,8 @@ class EDS extends SolrDefault
     	return $linkedString;
     }
     
+
+
     /**
      * Parse a SimpleXml element and
      * return it's inner XML as an HTML string
@@ -538,9 +540,28 @@ class EDS extends SolrDefault
     		// Parse bibliography (anchors and links)
     		$data = preg_replace('/<a idref="([^\"]*)"/', '<a href="#$1"', $data);
     		$data = preg_replace('/<a id="([^\"]*)" idref="([^\"]*)" type="([^\"]*)"/', '<a id="$1" href="#$2"', $data);
+    		
+    		$data = $this->replaceBRWithCommas($data, $group);
     	}
 
     	return $data; 
+    }
+    
+    /**
+     * Replace <br> tags that are embedded in data to commas
+     * @param string $data
+     * @param string $group
+     * @return string
+     */
+    private function replaceBRWithCommas($data, $group)
+    {
+    	$groupsToReplace = array('au','su');
+    	if (in_array($group, $groupsToReplace)) {
+    		$br =  '/<br \/>/';
+    		$comma = ', ';
+    		return preg_replace($br, $comma, $data);
+    	}
+    	return $data;
     }
 
     
