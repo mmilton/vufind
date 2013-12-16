@@ -140,6 +140,21 @@ class SearchRequestModel
 							$this->addExpander(substr($filter,7));
 						else if(substr($filter,0,11) == 'SEARCHMODE:')
 							$this->searchMode = substr($filter,11);
+						//PublicationDate:[xxxx TO xxxx]
+						else if(substr($filter,0,15) == 'PublicationDate'){
+							$dates = substr($filter,17);
+							$dates = substr($dates, 0, strlen($dates)-1);
+							$toPos = strpos($dates, 'TO');
+							if($toPos){
+								$start = trim(substr($dates, 0, $toPos-1));
+								$end = trim(substr($dates, $toPos+3));
+							}
+							if('*' == $start || null == $start)
+								$start = '0000';
+							if('*' == $end || null == $end)
+								$end = $end = date('Y');
+							$this->addLimiter("DT1:$start-01/$end-12");							
+						}
 						else {
 							$this->addFilter("$cnt,$filter");
 							$cnt++;
