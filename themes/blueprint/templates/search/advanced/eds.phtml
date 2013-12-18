@@ -1,23 +1,43 @@
+<? if (!empty($this->expanderList)): ?>
+	<fieldset class="span-5">
+		<legend><?=$this->transEsc('Search Modes and Expanders')?></legend>
+  		<? foreach ($this->expanderList as $field => $expander): 
+  				$value = $expander['Value'] ?>
+				<label class="displayBlock" for="expand_<?=$this->escapeHtml(str_replace(' ', '+', $field))?>"><?=$this->transEsc($expander['Label'])?></label>
+    			<input id="expand_<?=$this->escapeHtml($field)?>" type="checkbox" <?=(isset($expander['selected']) && $expander['selected'])?'checked="checked"':''?> name="filter[]" value="EXPAND:<?=$this->escapeHtml($value)?>">
+		<? endforeach; ?>
+		
+		<label class="displayBlock" for="searchModes">Search mode</label>
+		<? foreach ($this->searchModes as $field => $searchMode): 
+  				$value = $searchMode['Value'] ?>
+    			<input id="searchMode_<?=$this->escapeHtml($field)?>" type="radio" <?=(isset($searchMode['selected']) && $searchMode['selected'])?'checked="checked"':''?> name="filter[]" value="SEARCHMODE:<?=$this->escapeHtml($value)?>"><?=$this->transEsc($searchMode['Label'])?>
+    			<br/>
+		<? endforeach; ?>
+  	</fieldset>
+  <div class="clear"></div>
+<? endif; ?>
+
+
 <? if (!empty($this->limiterList)): ?>
-  <h3><b><?=$this->transEsc('Limit your results')?></b></h3>
+	<fieldset class="span-5">
+		<legend><?=$this->transEsc('Limit your results')?></legend>
   <? foreach ($this->limiterList as $field => $facet): ?>
-  <div class="span-5">
   	<? switch($facet['Type']){
 		case 'multiselectvalue': ?>
-			<b><label class="displayBlock" for="limit_<?=$this->escapeHtml(str_replace(' ', '+', $field))?>"><?=$this->transEsc($facet['Label'])?></label></b>
+			<label class="displayBlock" for="limit_<?=$this->escapeHtml(str_replace(' ', '+', $field))?>"><?=$this->transEsc($facet['Label'])?></label>
     		<select id="limit_<?=$this->escapeHtml($field)?>" name="filter[]" multiple="multiple" size="10">
 				<? foreach ($facet['LimiterValues'] as $id => $facetValue): ?>
         			<? $value = $facetValue['Value']; ?>
         			<option value="<?='LIMIT|'.$this->escapeHtml($field . ':' . $facetValue['Value'])?>"<?=(isset($facetValue['selected']) && $facetValue['selected'])?' selected="selected"':''?>><?=$this->escapeHtml($facetValue['Value'])?></option>
       			<? endforeach; ?>
     		</select>
-    		<br/>
+    		<!-- <br/> -->
     		<? break;
 		case 'select': 
 			$value = $facet['LimiterValues'][0]['Value'] ?>
-			<b><label class="displayBlock" for="limit_<?=$this->escapeHtml(str_replace(' ', '+', $field))?>"><?=$this->transEsc($facet['Label'])?></label></b>
+			<label class="displayBlock" for="limit_<?=$this->escapeHtml(str_replace(' ', '+', $field))?>"><?=$this->transEsc($facet['Label'])?></label>
     		<input id="limit_<?=$this->escapeHtml($field)?>" type="checkbox" <?=(isset($facet['LimiterValues'][0]['selected']) && $facet['LimiterValues'][0]['selected'])?'checked="checked"':''?> name="filter[]" value="<?=$this->escapeHtml('LIMIT|'.$field . ':' . $value)?>">
-			<br/>
+			    		<!-- <br/> -->
 			<? break;
 		case 'text': ?>
 			<!-- not implemented -->
@@ -41,36 +61,22 @@
 			<!--  not implemented -->
 			<? break;
      	}; ?>
-  	</div>
   <? endforeach; ?>
-
   <div class="clear"></div>
-<? endif; ?>
-
-<? if (!empty($this->expanderList)): ?>
-	<h3><b><?=$this->transEsc('Expanders')?></b></h3>
-   	<div class="span-5">
-  	<? foreach ($this->expanderList as $field => $expander): 
-  			$value = $expander['Value'] ?>
-			<b><label class="displayBlock" for="expand_<?=$this->escapeHtml(str_replace(' ', '+', $field))?>"><?=$this->transEsc($expander['Label'])?></label></b>
-    		<input id="expand_<?=$this->escapeHtml($field)?>" type="checkbox" <?=(isset($expander['selected']) && $expander['selected'])?'checked="checked"':''?> name="filter[]" value="EXPAND:<?=$this->escapeHtml($value)?>">
-			<br/>
-  	<? endforeach; ?>
-  	</div>
-  <div class="clear"></div>
-<? endif; ?>
-
-
-<? if (isset($this->dateRangeLimit)): ?>
+  <? if (isset($this->dateRangeLimit)): ?>
   <? /* Load the publication date slider UI widget */ $this->headScript()->appendFile('pubdate_slider.js'); ?>
-  <input type="hidden" name="daterange[]" value="publishDate"/>
-  <fieldset class="publishDateLimit span-5" id="publishDate">
+  <input type="hidden" name="daterange[]" value="PublicationDate"/>
+  <fieldset class="publishDateLimit span-5" id="PublicationDate">
     <legend><?=$this->transEsc('adv_search_year')?></legend>
-    <label for="publishDatefrom"><?=$this->transEsc('date_from')?>:</label>
-    <input type="text" size="4" maxlength="4" class="yearbox" name="publishDatefrom" id="publishDatefrom" value="<?=$this->escapeHtml($this->dateRangeLimit[0])?>" />
-    <label for="publishDateto"><?=$this->transEsc('date_to')?>:</label>
-    <input type="text" size="4" maxlength="4" class="yearbox" name="publishDateto" id="publishDateto" value="<?=$this->escapeHtml($this->dateRangeLimit[1])?>" />
-    <div id="publishDateSlider" class="dateSlider"></div>
+    <label for="PublicationDatefrom"><?=$this->transEsc('date_from')?>:</label>
+    <input type="text" size="4" maxlength="4" class="yearbox" name="PublicationDatefrom" id="PublicationDatefrom" value="<?=$this->escapeHtml($this->dateRangeLimit[0])?>" />
+    <label for="PublicationDateto"><?=$this->transEsc('date_to')?>:</label>
+    <input type="text" size="4" maxlength="4" class="yearbox" name="PublicationDateto" id="PublicationDateto" value="<?=$this->escapeHtml($this->dateRangeLimit[1])?>" />
+    <div id="PublicationDateSlider" class="dateSlider"></div>
   </fieldset>
+<? endif; ?>
+  </fieldset>
+  
+ <div class="clear"></div> 
 <? endif; ?>
 <div class="clear"></div>

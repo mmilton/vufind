@@ -28,6 +28,7 @@
 namespace VuFind\Controller;
 
 use EBSCO\EdsApi\Zend2 as EdsApi;
+use VuFind\Solr\Utils as SolrUtils;
 /**
  * EDS Controller
  *
@@ -76,7 +77,7 @@ class EdsController extends AbstractSearch
         );
         $view->expanderList = $this->processAdvancedExpanders($view->saved);
         $view->searchModes = $this->processAdvancedSearchModes($view->saved);
-
+		$view->dateRangeLimit = $this->processPublicationDateRange($view->saved);
         return $view;
     }
 
@@ -209,6 +210,32 @@ class EdsController extends AbstractSearch
     }
     
     /**
+     * Process the publicationd date range limiter widget
+     *
+     * @param object $searchObject Saved search object (false if none)
+     *
+     * @return array               To and from dates 
+     */
+    protected function processPublicationDateRange($searchObject = false)
+    {
+    	$from = $to = '';
+    	if($searchObject){
+    		$filters = $searchObject->getParams()->getFilterList();
+    		foreach($filters as $key => $value ){
+				if('PublicationDate' == $key){
+					if ($range = SolrUtils::parseRange($value[0]['value'])) {
+						$from = $range['from'] == '*' ? '11' : $range['from'];
+						$to = $range['to'] == '*' ? '12' : $range['to'];
+					}
+					$searchObject->getParams()->removeFilter($key.':'.$value[0]['value']);
+					break;
+				}
+    		}
+    	}
+    	return array($from, $to);
+    }
+    
+    /**
      * Process the search modes to be used on the Advanced Search screen.
      *
      * @param object $searchObject Saved search object (false if none)
@@ -236,6 +263,5 @@ class EdsController extends AbstractSearch
    
     	return $searchModes;
     }
- 
 }
 
