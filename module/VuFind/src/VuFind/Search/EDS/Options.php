@@ -182,6 +182,14 @@ class Options extends \VuFind\Search\Base\Options
     	return $this->highlight;
     }
     /**
+     * Return the expander ids that have the default on flag set in admin
+     * @return array
+     */
+    public function getDefaultExpanders()
+    {
+    	return $this->defaultExpanders;
+    }
+    /**
      * Return the route name of the action used for performing advanced searches.
      * Returns false if the feature is not supported.
      *
@@ -508,32 +516,4 @@ class Options extends \VuFind\Search\Base\Options
 		}
 		return $ssExpanderOptions;	
 	}
-	
-	/**
-	 * Obtain extra filters that are configured to display on the search screen
-	 * 
-	 * @return array
-	 */
-	/*
-	public function getSearchScreenFilters()
-	{
-		//set expanders
-		$ssExpanderOptions = array();
-		if(isset($this->commonExpanders)){
-			foreach($this->commonExpanders as $key){
-				if(isset($this->expanderOptions[$key]))
-					$ssExpanderOptions[$key] =  $this->expanderOptions[$key];
-			}
-		}
-		//set limiters
-		$ssLimiterOptions = array();
-		if(isset($this->commonLimiters)){
-			foreach($this->commonLimiters as $key){
-				if(isset($this->limiterOptions[$key]))
-					$ssLimiterOptions[$key] =  $this->limiterOptions[$key];
-			}
-		}
-		return array('expanders' => $ssExpanderOptions, 'limiters' => $ssLimiterOptions);
-	}
-	*/
 }

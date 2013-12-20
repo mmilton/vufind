@@ -24,7 +24,7 @@
  * @author   Michelle Milton <mmilton@epnet.com>
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  */
-namespace VuFind\Search\EDS;
+namespace VuFind\Search\eds;
 use VuFindSearch\ParamBag;
 use EBSCO\EdsApi\SearchRequestModel;
 
@@ -44,6 +44,12 @@ class Params extends \VuFind\Search\Base\Params
 	 */
 	protected $extraFilterList = array();
 	
+	/**
+	 * property to determine if the request using this parameters objects is for setup only, 
+	 * 
+	 * @var boolean
+	 */
+	public $isSetupOnly = false;
 	/**
 	 * Pull the search parameters
 	 *
@@ -86,6 +92,9 @@ class Params extends \VuFind\Search\Base\Params
         if(isset($mode))
         	$backendParams->set('searchMode', $mode);
      
+        //process the setup only parameter
+        if(true == $this->isSetupOnly)
+        	$backendParams->set('setuponly',$this->isSetupOnly);
         $this->createBackendFilterParameters($backendParams, $options);
 
         return $backendParams;
@@ -250,31 +259,6 @@ class Params extends \VuFind\Search\Base\Params
     	return isset($this->fullFacetSettings) ? $this->fullFacetSettings : array();
     }
     
-
-	
-	
-	/**
-	 * Expanders specified as querystring parameters
-	 *
-	 * @param string $expander
-	 */
-    /*
-	protected function addExpander($expander)
-	{
-		$this->expanders[] = $expander;
-	}
-	*/
-	/**
-	 * Whether or not a given expander is present
-	 *
-	 * @param string $expander
-	 */
-	/*
-	 public function hasExpander($expander)
-	{
-		return isset($this->expanders[$expander]) ? true : false;
-	}
-	*/
 	/**
 	 * Apply applied limiters
 	 *

@@ -88,6 +88,7 @@ class EdsController extends AbstractSearch
      */
     public function homeAction()
     {
+    	$this->setUp();
         return $this->createViewModel(
             array('results' => $this->getHomePageFacets())
         );
@@ -124,6 +125,12 @@ class EdsController extends AbstractSearch
     	$params = $results->getParams();
     	$options = $params->getOptions();
     	$availableLimiters = $options->getAvailableLimiters();
+    	if(!$availableLimiters){
+    		//execute a call to search just to pull in the limiters
+    		$this->setUp();
+    		
+    	}    		
+    	
     	
         $limit = isset($config->Advanced_Facet_Settings->facet_limit)
                 ? $config->Advanced_Facet_Settings->facet_limit : 100;
@@ -165,13 +172,18 @@ class EdsController extends AbstractSearch
                 	// If we haven't already found a selected facet and the current
                 	// facet has been applied to the search, we should store it as
                 	// the selected facet for the current control.
-                	if ($searchObject && $searchObject->getParams()->hasFilter('LIMIT|'.$fullFilter) ) {
-                    	$facetList[$facet]['LimiterValues'][$key]['selected'] = true;
-                    	// Remove the filter from the search object -- we don't want
-                   	 	// it to show up in the "applied filters" sidebar since it
-                   	 	// will already be accounted for by being selected in the
-                    	// filter select list!
-                    	$searchObject->getParams()->removeFilter('LIMIT|'.$fullFilter);
+                	if ($searchObject ){
+                		if($searchObject->getParams()->hasFilter('LIMIT|'.$fullFilter) ) {
+		              		$facetList[$facet]['LimiterValues'][$key]['selected'] = true;
+                    		// Remove the filter from the search object -- we don't want
+                   	 		// it to show up in the "applied filters" sidebar since it
+                   	 		// will already be accounted for by being selected in the
+                    		// filter select list!
+                    		$searchObject->getParams()->removeFilter('LIMIT|'.$fullFilter);
+                		}
+               	 	}else {
+               	 		if('y' == $facetList[$facet]['DefaultOn'])
+               	 			$facetList[$facet]['selected'] = true;
                	 	}
             	}	
         	}
@@ -194,9 +206,11 @@ class EdsController extends AbstractSearch
     	$params = $results->getParams();
     	$options = $params->getOptions();
     	$availableExpanders = $options->getAvailableExpanders();
-    	// Process the facets, assuming they came back
+    	$defaultExpanders = $options->getDefaultExpanders();
+    	// Process the expanders, assuming they came back
     	foreach ($availableExpanders as $key => $value) {;
-   			if ($searchObject && $searchObject->getParams()->hasFilter('EXPAND:'.$value['Value']) ) {
+   			if ($searchObject){
+   				if($searchObject->getParams()->hasFilter('EXPAND:'.$value['Value']) ) {
     				$availableExpanders[$key]['selected'] = true;
     				// Remove the filter from the search object -- we don't want
     				// it to show up in the "applied filters" sidebar since it
@@ -204,8 +218,11 @@ class EdsController extends AbstractSearch
     				// filter select list!
     				$searchObject->getParams()->removeFilter('EXPAND:'.$value['Value']);
     			}
+    		}else{
+    			if(in_array($key, $defaultExpanders))
+        			$availableExpanders[$key]['selected'] = true;
     		}
-    		
+    	}
     	return $availableExpanders;
     }
     
@@ -251,17 +268,58 @@ class EdsController extends AbstractSearch
     	$searchModes = $options->getModeOptions();
     	// Process the facets, assuming they came back
     	foreach ($searchModes as $key => $mode) {;
-    		if ($searchObject && $searchObject->getParams()->hasFilter('SEARCHMODE:'.$mode['Value']) ) {
-    			$searchModes[$key]['selected'] = true;
-    			// Remove the filter from the search object -- we don't want
-    			// it to show up in the "applied filters" sidebar since it
-    			// will already be accounted for by being selected in the
-    			// filter select list!
-    			$searchObject->getParams()->removeFilter('SEARCHMODE:'.$mode['Value']);
+    		if ($searchObject){
+    			if( $searchObject->getParams()->hasFilter('SEARCHMODE:'.$mode['Value']) ) {
+    				$searchModes[$key]['selected'] = true;
+    				// Remove the filter from the search object -- we don't want
+    				// it to show up in the "applied filters" sidebar since it
+    				// will already be accounted for by being selected in the
+    				// filter select list!
+    				$searchObject->getParams()->removeFilter('SEARCHMODE:'.$mode['Value']);
+    			}
+    		}else{
+    			if($key == $options->getDefaultMode())
+    				$searchModes[$key]['selected'] = true;
     		}
     	}
    
     	return $searchModes;
+    }
+    
+    /**
+     * Make the initial calls to the EDS API to obtain/generate authentication and session tokens
+     * as well as calling the info method to cache search criteria
+     */
+    public function setUp()
+    {
+    	$results = $this->getResultsManager()->get($this->searchClassId);
+    	$params = $results->getParams();
+    	$params->isSetupOnly = true;
+    	
+    	// Attempt to perform the search; if there is a problem, inspect any Solr
+    	// exceptions to see if we should communicate to the user about them.
+    	try {
+    		// Explicitly execute search within controller -- this allows us to
+    		// catch exceptions more reliably:
+    		$results->performAndProcessSearch();
+    	
+    		
+    	} catch (\VuFindSearch\Backend\Exception\BackendException $e) {
+    		if ($e->hasTag('VuFind\Search\ParserError')) {
+    			// If it's a parse error or the user specified an invalid field, we
+    			// should display an appropriate message:
+    			$view->parseError = true;
+    	
+    			// We need to create and process an "empty results" object to
+    			// ensure that recommendation modules and templates behave
+    			// properly when displaying the error message.
+    			$view->results = $this->getResultsManager()->get('EmptySet');
+    			$view->results->setParams($params);
+    			$view->results->performAndProcessSearch();
+    		} else {
+    			throw $e;
+    		}
+    	}
     }
 }
 

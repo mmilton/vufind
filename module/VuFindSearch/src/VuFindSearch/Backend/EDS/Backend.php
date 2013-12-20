@@ -204,15 +204,21 @@ class Backend implements BackendInterface
      **/
     public function search(AbstractQuery $query, $offset, $limit,
         ParamBag $params = null) {
+    	//process EDS API communication tokens.
+    	$authenticationToken = $this->getAuthenticationToken();
+    	$sessionToken = $this->getSessionToken();
+    	$this->debugPrint("Authentication Token: $authenticationToken, SessionToken: $sessionToken");
+
+    	//Check to see if there is a parameter to only process this call as a setup
+    	if(null != $params->get('setuponly') && true == $params->get('setuponly'))
+	    	return false;
+    	
     	//create query parameters from VuFind data
     	$queryString = !empty($query) ? $query->getAllTerms() : '';
     	$paramsString = implode('&', $params->request());
     	$this->debugPrint("Query: $queryString, Limit: $limit, Offset: $offset, Params: $paramsString ");
     	
-    	$authenticationToken = $this->getAuthenticationToken();
-    	$sessionToken = $this->getSessionToken();
-    	$this->debugPrint("Authentication Token: $authenticationToken, SessionToken: $sessionToken");
-    	 
+    	
     	$baseParams = $this->getQueryBuilder()->build($query);
     	$paramsString = implode('&', $baseParams->request());
     	$this->debugPrint("BaseParams: $paramsString ");
@@ -275,6 +281,7 @@ class Backend implements BackendInterface
     	$this->injectSourceIdentifier($collection);
     	return $collection;
     }
+    
     
     /**
      * Retrieve a single document.
