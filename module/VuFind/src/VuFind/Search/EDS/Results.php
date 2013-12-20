@@ -63,7 +63,7 @@ class Results extends \VuFind\Search\Base\Results
 		$collection = $this->getSearchService()->search(
 				'EDS', $query, $offset, $limit, $params
 		);
-	
+		if(null != $collection){
 		$this->responseFacets = $collection->getFacets();
 		$this->resultTotal = $collection->getTotal();
 	
@@ -82,6 +82,7 @@ class Results extends \VuFind\Search\Base\Results
 	
 		// Construct record drivers for all the items in the response:
 		$this->results = $collection->getRecords();
+		}
 	}
 	
 	
