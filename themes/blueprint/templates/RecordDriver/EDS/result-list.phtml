@@ -36,20 +36,18 @@
     
     <? $customLinks = $this->driver->getCustomLinks();
     if (!empty($customLinks)): ?>
-    <div class="resultItemLine4">
-      <ul class="custom-links">
+    <div class="resultItemLine4 custom-links">
         <? foreach ($customLinks as $customLink): ?>
         <? $url = isset($customLink['Url']) ? $customLink['Url'] : ''; 
         	$mot = isset($customLink['MouseOverText'])? $customLink['MouseOverText'] : '';
         	$icon = isset ($customLink['Icon']) ? $customLink['Icon'] : ''; 
         	$name = isset($customLink['Name']) ? $customLink['Name'] : '';?>
-        <li>
+        <span>
           <a href="<?=$url?>" target="_blank" title="<?=$mot?>" class="custom-link">
             <? if ($icon): ?><img src="<?=$icon?>" /><? endif; ?><?=$name?>
           </a>
-        </li>
+        </span>
         <? endforeach; ?>
-      </ul>
     </div>
     <? endif; ?>
     
