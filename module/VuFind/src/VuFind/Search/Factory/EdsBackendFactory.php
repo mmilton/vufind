@@ -103,6 +103,7 @@ class EdsBackendFactory implements FactoryInterface
         }
         $connector = $this->createConnector();
         $backend   = $this->createBackend($connector);
+        $backend->setAuthManager($this->serviceLocator->get('VuFind\AuthManager'));
         return $backend;
     }
 

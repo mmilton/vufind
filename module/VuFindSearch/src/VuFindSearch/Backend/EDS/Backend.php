@@ -130,6 +130,13 @@ class Backend implements BackendInterface
 	protected $serviceLocator;
 	
 	/**
+	 * Vufind Authentication manager 
+	 * 
+	 * @var \VuFind\Auth\Manager
+	 */
+	protected $authManager = null;
+	
+	/**
 	 * Constructor.
 	 *
 	 * @param ApiClient                        $client 	EdsApi client to use 
@@ -543,17 +550,20 @@ class Backend implements BackendInterface
     {
     	$sessionToken = '';
     	$container = new \Zend\Session\Container('EBSCO');
-    	if (!$isInvalid && !empty($container->sessionID)) 
-    		$sessionToken = $container->sessionID;
-    	else 
-    	{
-    		$sessionToken = $this->createEBSCOSession();
-    		//When creating a new session, also call the INFO mehtod to pull the available search
-    		//criteria for this profile
-    		$this->createSearchCriteria($sessionToken);
+    	if (!$isInvalid && !empty($container->sessionID)) {
+    		//check to see if the user has logged in/out between the creation of this session token and now
+    		$sessionGuest = $container->sessionGuest;
+    		$currentGuest = $this->isGuest();
+    		
+    		if($sessionGuest == $currentGuest)
+    			return $container->sessionID;
     	}
+    	
+    	$sessionToken = $this->createEBSCOSession();
+    	//When creating a new session, also call the INFO mehtod to pull the available search
+    	//criteria for this profile
+    	$this->createSearchCriteria($sessionToken);
 
-    	$this->debugPrint("SessionToken to use: $sessionToken");
     	return $sessionToken;
     }
     
@@ -564,7 +574,7 @@ class Backend implements BackendInterface
     protected function createEBSCOSession()
     {
     	//If the user is not logged in, the treat them as a guest
-    	$isGuest = 'y';
+    	$guest = $this->isGuest();
     	$container = new \Zend\Session\Container('EBSCO');
     
     	//if there is no profile passed, use the one set in the configuration file
@@ -576,11 +586,25 @@ class Backend implements BackendInterface
     			$profile = $config->EBSCO_Account->profile;
     		}
     	}
-    	$session = $this->createSession($isGuest, $profile);
+    	$session = $this->createSession($guest, $profile);
     	$container->sessionID = $session;
     	$container->profileID = $profile;
+    	$container->sessionGuest = $guest;
     	return $container->sessionID;
     
+    }
+    
+    /**
+     * Determines whether or not the current user session is identifed as a guest session
+     * 
+     * @returns string 'y'|'n'
+     */
+    private function isGuest()
+    {
+    	if(isset($this->authManager)){
+    		return $this->authManager->isLoggedIn() ? 'n' : 'y';
+    	}
+    	return 'y';
     }
     
     /**
@@ -590,7 +614,7 @@ class Backend implements BackendInterface
      * @param string $authToken Authentication to use for generating a new session if necessary
      * @return string
      */
-    public function createSession($isGuest = 'y', $profile='')
+    public function createSession($isGuest, $profile='')
     {
     	try {
     		$authToken = $this->getAuthenticationToken();
@@ -662,7 +686,15 @@ class Backend implements BackendInterface
     	$container->info = $info;
     	return $container->info;
     }
-    
-    
-
+      
+	
+	/**
+	 * Set the VuFind Authentication Manager
+	 * 
+	 * @param \VuFind\Auth\Manager $authManager
+	 */
+	public function setAuthManager($authManager)
+	{
+		$this->authManager = $authManager;
+	}
 }
