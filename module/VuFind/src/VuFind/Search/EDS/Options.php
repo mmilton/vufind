@@ -38,20 +38,6 @@ class Options extends \VuFind\Search\Base\Options
      */
     protected $resultLimit = 100;
 
-	/**
-	 * Amount of data to return 
-	 *
-	 * @var array
-	 */
-    protected $amountOptions = array();
-    
-    /**
-     * Default amount of data to return
-     *
-     * @var string
-     */
-    protected $defaultAmount = 'detailed';
-
     /**
      * Available search mode options
      *
@@ -112,12 +98,6 @@ class Options extends \VuFind\Search\Base\Options
     protected $commonExpanders = array();
     
     /**
-     * Default search results view
-     * @var string
-     */
-    protected $defaultView;
-
-    /**
      * Constructor
      *
      * @return void
@@ -127,12 +107,13 @@ class Options extends \VuFind\Search\Base\Options
         $this->searchIni = 'EDS';
         $searchSettings = $configLoader->get($this->searchIni);
         parent::__construct( $configLoader);;
+        $this->viewOptions = array('list|title' => 'title', 'list|brief' => 'brief', 'list|detailed'=>'detailed');
         $container = new \Zend\Session\Container('EBSCO');
         $this->apiInfo = $container->info;
         $this->setOptionsFromApi($searchSettings);
         $this->setOptionsFromConfig($searchSettings);
     }
-
+    
     /**
      * Get an array of search mode options
      *
@@ -174,6 +155,20 @@ class Options extends \VuFind\Search\Base\Options
     {
     	return $this->defaultView;
     }
+    
+    /**
+     * Return the view associated with this configuration
+     *
+     * @return string
+     */
+    public function getEdsView()
+    {
+   		$viewArr = explode('|', $this->defaultView);
+   		if(1 < count($viewArr))
+   			return $viewArr[1];
+    	return $this->defaultView;
+    }
+    
     /**
      * Whether or not to specify highlighting in the API
      */
@@ -309,7 +304,7 @@ class Options extends \VuFind\Search\Base\Options
     	
     	//View preferences
     	if (isset($searchSettings->General->default_view)) {
-    		$this->defaultView = $searchSettings->General->default_view;
+    		$this->defaultView = 'list|'.$searchSettings->General->default_view;
     	}
     	
     	
@@ -475,11 +470,9 @@ class Options extends \VuFind\Search\Base\Options
 			
 			//default view (amount)
 			if(isset($this->apiInfo['ViewResultSettings']['ResultListView']))
-				$this->defaultAmount = $this->apiInfo['ViewResultSettings']['ResultListView'];
+				$this->defaultView = 'list|'. $this->apiInfo['ViewResultSettings']['ResultListView'];
 			else
-				$this->defaultAmount = 'brief';
-			$this->amountOptions = array('brief', 'title', 'detailed');
-			
+				$this->defaultView = 'list|brief';
 	}
 	/**
 	 * Obtain limiters to display ont the basic search screen
@@ -515,5 +508,16 @@ class Options extends \VuFind\Search\Base\Options
 			}
 		}
 		return $ssExpanderOptions;	
+	}
+	
+	/**
+	 * Get default view setting.
+	 *
+	 * @return int
+	 */
+	public function getDefaultView()
+	{
+		$viewArr = explode('|', $this->defaultView);
+		return $viewArr[0];
 	}
 }

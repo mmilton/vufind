@@ -64,24 +64,19 @@ class Results extends \VuFind\Search\Base\Results
 				'EDS', $query, $offset, $limit, $params
 		);
 		if(null != $collection){
-		$this->responseFacets = $collection->getFacets();
-		$this->resultTotal = $collection->getTotal();
+			$this->responseFacets = $collection->getFacets();
+			$this->resultTotal = $collection->getTotal();
 	
-		// Add fake date facets if flagged earlier; this is necessary in order
-		// to display the date range facet control in the interface.
-		//$dateFacets = $this->getParams()->getDateFacetSettings();
-		//if (!empty($dateFacets)) {
-		//	foreach ($dateFacets as $dateFacet) {
-				$this->responseFacets[] = array(
+			//Add a publication date facet
+			$this->responseFacets[] = array(
 						'fieldName' => 'PublicationDate',
 						'displayName' => 'PublicationDate',
+						'displayText' => 'Publication Date',
 						'counts' => array()
-				);
-		//	}
-	//	}
+			);
 	
-		// Construct record drivers for all the items in the response:
-		$this->results = $collection->getRecords();
+			// Construct record drivers for all the items in the response:
+			$this->results = $collection->getRecords();
 		}
 	}
 	
@@ -147,12 +142,12 @@ class Results extends \VuFind\Search\Base\Results
 	 					: $facetDetails['value'];
 	 						
 	 				}
-	 	
+	 				//The EDS API returns facets in the order they should be displayed
 	 				// Put the current facet cluster in order based on the .ini
 	 				// settings, then override the display name again using .ini
 	 				// settings.
 	 				//$i = $order[$field];
-	 				$current['label'] = $field;
+	 				$current['label'] = isset($filter[$field]) ? $filter[$field] : $field;
 	 	
 	 				// Create a reference to counts called list for consistency with
 	 				// Solr output format -- this allows the facet recommendations

@@ -84,7 +84,7 @@ class Params extends \VuFind\Search\Base\Params
             $backendParams->set('highlight', true);
         }
         
-        $view = $options->getView();
+        $view = $this->getEdsView();
         if(isset($view))
         	$backendParams->set('view', $view);
         
@@ -218,7 +218,21 @@ class Params extends \VuFind\Search\Base\Params
      */
     public function getView()
     {
-    	return 'list';
+    	$viewArr = explode('|', $this->view);
+    	return $viewArr[0];
+    }
+    
+    /**
+     * Return the value for which search view we use
+     *
+     * @return string
+     */
+    public function getEdsView()
+    {
+    	$viewArr = explode('|', $this->view);
+    	if(1 < count($viewArr))
+    		return $viewArr[1];
+    	return $this->options->getEdsView();
     }
     
     /**
@@ -290,8 +304,9 @@ class Params extends \VuFind\Search\Base\Params
 	 */
 	public function getFacetLabel($field)
 	{
-		return isset($field) ? $field : "Other";
-	}
+		return isset($this->facetConfig[$field])
+		? $this->facetConfig[$field] : $field;
+		}
 	
 	/**
 	 * Get the date facet settings stored by addFacet.
@@ -332,5 +347,20 @@ class Params extends \VuFind\Search\Base\Params
 		}
 	}
 	
-	
+	/**
+	 * Basic 'getter' for list of available view options.
+	 *
+	 * @return array
+	 */
+	public function getViewList()
+	{
+		$list = array();
+		foreach ($this->getOptions()->getViewOptions() as $key => $value) {
+			$list[$key] = array(
+					'desc' => $value,
+					'selected' => ($key == $this->getView().'|'.$this->getEdsView())
+			);
+		}
+		return $list;
+	}
 }

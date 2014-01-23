@@ -116,8 +116,6 @@ class QueryBuilder
 	 */
 	protected function queryGroupToArray(QueryGroup $query)
 	{
-		//return array();
-		//NEED TO DETERMINE WHETHER OR NOT WE ARE DOING ADVANCED SEARCH QUERIES THE SAME....
 		$groups =  array();
 		foreach ($query->getQueries() as $params) {
 			// Advanced Search

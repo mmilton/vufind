@@ -8,11 +8,12 @@
 		<? endforeach; ?>
 		
 		<label class="displayBlock" for="searchModes">Search mode</label>
+		<select id="searchMode_<?=$this->escapeHtml($field)?>" name="filter[]">
 		<? foreach ($this->searchModes as $field => $searchMode): 
   				$value = $searchMode['Value'] ?>
-    			<input id="searchMode_<?=$this->escapeHtml($field)?>" type="radio" <?=(isset($searchMode['selected']) && $searchMode['selected'])?'checked="checked"':''?> name="filter[]" value="SEARCHMODE:<?=$this->escapeHtml($value)?>"><?=$this->transEsc($searchMode['Label'])?>
-    			<br/>
+    			<option  <?=(isset($searchMode['selected']) && $searchMode['selected'])?'selected="selected"':''?>  value="SEARCHMODE:<?=$this->escapeHtml($value)?>"><?=$this->transEsc($searchMode['Label'])?></option>
 		<? endforeach; ?>
+		</select>
   	</fieldset>
   <div class="clear"></div>
 <? endif; ?>
