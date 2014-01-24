@@ -304,9 +304,13 @@ class Params extends \VuFind\Search\Base\Params
 	 */
 	public function getFacetLabel($field)
 	{
-		return isset($this->facetConfig[$field])
-		? $this->facetConfig[$field] : $field;
-		}
+		//Also store Limiter IDs/Values in the config file
+		$facetId = $field;
+		if(substr($field,0,6) == 'LIMIT|')
+			$facetId = substr($field,6);
+		return isset($this->facetConfig[$facetId])
+		? $this->facetConfig[$facetId] : $facetId;
+	}
 	
 	/**
 	 * Get the date facet settings stored by addFacet.
