@@ -60,7 +60,21 @@ class Params extends \VuFind\Search\Base\Params
 	 */
 	public function initFromRequest($request)
 	{
+		$origin = $request->get('origin');
+		if('home' == $origin)
+			$this->setAPIDefaults();
+		
 		parent::initFromRequest($request);
+		
+		//make sure that the searchmode parameter is set
+		$searchmode = $request->get('searchmode');
+		if(isset($searchmode))
+			$this->getOptions()->setSearchMode($searchmode);
+		else {
+			//get default search mode and set as a hidden filter
+			$defaultSearchMode = $this->getOptions()->getDefaultMode();
+			$this->getOptions()->setSearchMode($defaultSearchMode);
+		}
 	}
 	
     /**
@@ -88,7 +102,7 @@ class Params extends \VuFind\Search\Base\Params
         if(isset($view))
         	$backendParams->set('view', $view);
         
-        $mode= $options->getDefaultMode();
+        $mode= $options->getSearchMode();
         if(isset($mode))
         	$backendParams->set('searchMode', $mode);
      
@@ -274,28 +288,6 @@ class Params extends \VuFind\Search\Base\Params
     }
     
 	/**
-	 * Apply applied limiters
-	 *
-	 * @param \Zend\StdLib\Parameters $request Parameter object representing user
-	 * request.
-	 *
-	 * @return string
-	 */
-	protected function initExpanders($request)
-	{
-		$vfExpanders= $request->get('expander');
-		if (!empty($vfExpanders)) {
-			if (is_array($vfExpanders)) {
-				foreach ($vfExpanders as $current) {
-					$this->addExpander($current);
-				}
-			} else {
-				$this->addExpander($vfExpanders);
-			}
-		}
-	}
-	
-	/**
 	 * Get a user-friendly string to describe the provided facet field.
 	 *
 	 * @param string $field Facet field name.
@@ -367,4 +359,31 @@ class Params extends \VuFind\Search\Base\Params
 		}
 		return $list;
 	}
+	
+	/**
+	 * This method set the default parameters that are returned in the INFO method
+	 * These should only be set on the 'first' search
+	 */
+	private function setAPIDefaults()
+	{
+		//expanders
+		$expanders = $this->getOptions()->getDefaultExpanders();
+		foreach ($expanders as $expander)
+			$this->addFilter('EXPAND:'.$expander);
+
+		//limiters
+		$limiters = $this->getOptions()->getAvailableLimiters();
+		foreach ($limiters as $key => $value)
+		{
+			if('select' == $value['Type'] && 'y' == $value['DefaultOn'])
+			{
+				//only select limiters can be defaulted on limiters can be defaulted
+				$val = $value['LimiterValues'][0]['Value'];
+				$this->addFilter('LIMIT|'.$key.':'.$val);
+			}
+		}
+				
+	}
+	
+	
 }

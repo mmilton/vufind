@@ -52,6 +52,12 @@ class Options extends \VuFind\Search\Base\Options
     protected $defaultMode = 'all';
     
     /**
+     * The set search mode
+     * @var string
+     */
+    protected $searchMode ;
+    
+    /**
      * Default expanders to apply
      * @var array
      */
@@ -98,6 +104,13 @@ class Options extends \VuFind\Search\Base\Options
     protected $commonExpanders = array();
     
     /**
+     * Pre-assigned filters
+     *
+     * @var array
+     */
+    protected $hiddenFilters = array();
+    
+    /**
      * Constructor
      *
      * @return void
@@ -134,6 +147,24 @@ class Options extends \VuFind\Search\Base\Options
     public function getDefaultMode()
     {
     	return $this->defaultMode;
+    }
+    
+    /**
+     * Obtain the set searchmode
+     * @return string the search mode
+     */
+    public function getSearchMode()
+    {
+    	return $this->searchMode;
+    }
+    
+    /**
+     * Set the search mode
+     * @param string $mode
+     */
+    public function setSearchMode($mode)
+    {
+    	$this->searchMode = $mode;
     }
     
     /**
@@ -519,5 +550,27 @@ class Options extends \VuFind\Search\Base\Options
 	{
 		$viewArr = explode('|', $this->defaultView);
 		return $viewArr[0];
+	}
+	
+	/**
+	 * Add a hidden (i.e. not visible in facet controls) filter query to the object.
+	 *
+	 * @param string $fq Filter query for Solr.
+	 *
+	 * @return void
+	 */
+	public function addHiddenFilter($fq)
+	{
+		$this->hiddenFilters[] = $fq;
+	}
+	
+	/**
+	 * Get an array of hidden filters.
+	 *
+	 * @return array
+	 */
+	public function getHiddenFilters()
+	{
+		return $this->hiddenFilters;
 	}
 }
