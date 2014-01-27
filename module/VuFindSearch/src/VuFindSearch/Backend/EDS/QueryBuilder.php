@@ -124,9 +124,11 @@ class QueryBuilder
 				// Process each search group
 				foreach ($params->getQueries() as $group) {
 					// Build this group individually as a basic search
-					$grp  = $this->queryToEdsQuery($group, $params->getOperator());
+					$op = $params->getOperator();
+					if($params->isNegated())
+						$op = 'NOT';
+					$grp  = $this->queryToEdsQuery($group, $op);
 					$groups[] = $grp;
-					//$this->debugPrint("Abstract Query: $grp ");
 				}
 			} else {
 				// Basic Search

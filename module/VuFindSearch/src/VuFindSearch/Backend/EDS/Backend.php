@@ -627,7 +627,7 @@ class Backend implements BackendInterface
     		{
     			try {
     				$authToken = $this->getAuthenticationToken(true);
-    				$results = $this->client->createSession($this->profile,  $isguest, $authToken);
+    				$results = $this->client->createSession($this->profile,  $isGuest, $authToken);
     			}catch(Exception $e){
     				throw new BackendException(
     						$e->getMessage(),

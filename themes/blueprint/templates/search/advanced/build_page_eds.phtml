@@ -1,0 +1,22 @@
+ <!-- EDS API doesn't have search groups with queries. Each query should be treated like a search group -->
+ $(document).ready(function() {
+  <? if (isset($this->searchDetails) && is_object($this->searchDetails)): ?>
+    <? foreach ($this->searchDetails->getQueries() as $searchGroup): ?>
+      <? $i = 0; foreach ($searchGroup->getQueries() as $search): ?>
+        <? if (++$i == 1): ?>
+          var new_group = addGroup('<?=addslashes($search->getString())?>', '<?=addslashes($search->getHandler())?>', '<?=$searchGroup->isNegated() ? 'NOT' : $searchGroup->getOperator()?>');
+      	<? endif; ?>
+      <? endforeach; ?>
+    <? endforeach; ?>
+    <?$numSearchGroups = count($this->searchDetails->getQueries());
+      while ($numSearchGroups < 3) {
+	  	addGroup();	
+	  };?>	
+  <? else: ?>
+    addGroup();
+	addGroup();
+	addGroup();
+  <? endif; ?>
+  // show the add group link
+  $("#addGroupLink").removeClass("offscreen");
+});
