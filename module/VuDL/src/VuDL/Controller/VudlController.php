@@ -27,6 +27,7 @@
  * @link     http://vufind.org   Main Site
  */
 namespace VuDL\Controller;
+use VuFind\Exception\RecordMissing as RecordMissingException;
 
 /**
  * This controller is for the viewing of the digital library files.
@@ -60,18 +61,28 @@ class VudlController extends AbstractVuDL
      */
     protected function getDetails($id, $skipSolr = false)
     {
+        $record = false;
         if (!$skipSolr) {
             try {
-                return $this->getSolrDetails($id);
-            } catch (\Exception $e) {
+                $record = $this->getSolrDetails($id);
+            } catch (RecordMissingException $e) {
                 // Do nothing, handled in fedora below
             }
         }
-        return $this->getFedora()->getRecordDetails($id);
+        if (!$record) {
+            $record = $this->getFedora()->getRecordDetails($id);
+        }
+        if (empty($record)) {
+            throw new RecordMissingException('Record not found.');
+        }
+        $details = $this->formatDetails($record);
+        return $details;
     }
 
     /**
      * Get details from Solr
+     *
+     * @param string $id ID to look up
      *
      * @return array
      * @throws \Exception
@@ -79,13 +90,30 @@ class VudlController extends AbstractVuDL
     protected function getSolrDetails($id)
     {
         // Blow up now if we can't retrieve the record:
-        if (!($record = $this->getRecordLoader()->load($id)->getRawData())) {
-            throw new \Exception('Solr details unavailable');
+        if ($record = $this->getRecordLoader()->load($id)->getRawData()) {
+            return $record;
+        } else {
+            throw new RecordMissingException('Solr details unavailable');
         }
-
+    }
+    
+    /**
+     * Organize the details based on config
+     *
+     * @param string $record associative array (fieldname => value)
+     *
+     * @return array
+     * @throws \Exception
+     */
+    protected function formatDetails($record)
+    {
         // Get config for which details we want
         $fields = $combinedFields = array(); // Save to combine later
-        foreach ($this->getDetailsList() as $key=>$title) {
+        $detailsList = $this->getDetailsList();
+        if (empty($detailsList)) {
+            throw new \Exception('Missing [Details] in VuDL.ini');
+        }
+        foreach ($detailsList as $key=>$title) {
             $keys = explode(',', $key);
             foreach ($keys as $k) {
                 $fields[$k] = $title;
@@ -130,7 +158,7 @@ class VudlController extends AbstractVuDL
     protected function getRoot($id)
     {
         $parents = $this->getFedora()->getParentList($id);
-        foreach ($parents[0] as $i=>$parent) {
+        foreach (array_keys($parents[0]) as $i) {
             if (in_array('ResourceCollection', $this->getFedora()->getClasses($i))) {
                 return $i;
             }
@@ -308,7 +336,8 @@ class VudlController extends AbstractVuDL
             $ret += $this->getSizeAndTypeInfo($record['techinfo']);
         }
         $renderer = $this->getViewRenderer();
-        $ret['div'] = $renderer->render('vudl/techinfo.phtml', array('record'=>$record));
+        $ret['div'] = $renderer
+            ->render('vudl/techinfo.phtml', array('record'=>$record));
         return $ret;
     }
 
@@ -368,21 +397,15 @@ class VudlController extends AbstractVuDL
 
         try {
             $driver = $this->getRecordLoader()->load($root, 'VuFind');
-            if ($driver->isProtected()) {
-                die('Access Denied.');
-            }
         } catch(\Exception $e) {
+        }
+        if (isset($driver) && $driver->isProtected()) {
+            return $this->forwardTo('VuDL', 'denied');
         }
 
         // File information / description
         $fileDetails = $this->getDetails($root);
-        if (!$fileDetails) {
-            throw new \Exception(
-                'Record not found. Please use the search bar to '
-                . 'try to find what you were looking for.<br/><br/>'
-                . 'If this problem persists,  please report the problem.<br/><br/>'
-            );
-        }
+
         // Copyright information
         $check = $this->getFedora()->getDatastreamHeaders($root, 'LICENSE');
         if (!strpos($check[0], '404')) {
@@ -466,9 +489,6 @@ class VudlController extends AbstractVuDL
 
         // File information / description
         $fileDetails = $this->getDetails($root);
-        if (!$fileDetails) {
-            die('Record not found. Yell at Chris.');
-        }
         $view->details = $fileDetails;
 
         // Get ids for all files
@@ -530,6 +550,16 @@ class VudlController extends AbstractVuDL
     }
 
     /**
+     * Access denied screen.
+     *
+     * @return mixed
+     */
+    protected function deniedAction()
+    {
+        return $this->createViewModel();
+    }
+
+    /**
      * Redirect to the appropriate sibling.
      *
      * @return mixed
@@ -546,7 +576,8 @@ class VudlController extends AbstractVuDL
             $members[intval($data[1][$i])-1] = $data[2][$i];
         }
         if (count($members) < 2) {
-            return $this->redirect()->toRoute('Collection', 'Home', array('id'=>$params['trail']));
+            return $this->redirect()
+                ->toRoute('Collection', 'Home', array('id'=>$params['trail']));
         }
         $index = -1;
         foreach ($members as $i=>$member) {
@@ -576,6 +607,7 @@ class VudlController extends AbstractVuDL
      */
     protected function collectionsAction()
     {
-      return $this->forwardTo('Collection', 'Home', array('id'=>$this->getRootId()));
+        return $this
+            ->forwardTo('Collection', 'Home', array('id' => $this->getRootId()));
     }
 }

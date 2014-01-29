@@ -1,11 +1,13 @@
 <div class="result source<?=$this->escapeHtml($this->driver->getResourceSource())?> recordId<?=$this->driver->supportsAjaxStatus()?' ajaxItemId':''?>">
   <input type="hidden" value="<?=$this->escapeHtml($this->driver->getUniqueID())?>" class="hiddenId" />
   <div class="span-2">
-  <? if ($summThumb = $this->record($this->driver)->getThumbnail()): ?>
-    <img src="<?=$this->escapeHtml($summThumb)?>" class="summcover" alt="<?=$this->transEsc('Cover Image')?>"/>
-  <? else: ?>
-    <img src="<?=$this->url('cover-unavailable')?>" class="summcover" alt="<?=$this->transEsc('No Cover Image')?>"/>
-  <? endif; ?>
+  <a href="<?=$this->recordLink()->getUrl($this->driver)?>">
+    <? if ($summThumb = $this->record($this->driver)->getThumbnail()): ?>
+      <img src="<?=$this->escapeHtml($summThumb)?>" class="summcover" alt="<?=$this->transEsc('Cover Image')?>"/>
+    <? else: ?>
+      <img src="<?=$this->url('cover-unavailable')?>" class="summcover" alt="<?=$this->transEsc('No Cover Image')?>"/>
+    <? endif; ?>
+  </a>
   </div>
   <div class="span-9">
     <div class="resultItemLine1">
@@ -64,6 +66,33 @@
            }
          }
       ?>
+
+      <?
+      /* Display information on duplicate records if available */
+      $dedupData = $this->driver->getDedupData();
+      if ($dedupData): ?> 
+      <div class="dedupInformation">
+      <?
+        $i = 0;
+        foreach ($dedupData as $source => $current) {
+          if (++$i == 1) {
+            ?><span class="currentSource"><a href="<?=$this->recordLink()->getUrl($this->driver)?>"><?=$this->transEsc("source_$source", array(), $source)?></a></span><?
+          } else {
+            if ($i == 2) {
+              ?> <span class="otherSources">(<?=$this->transEsc('Other Sources')?>: <?
+            } else {
+              ?>, <?
+            }
+            ?><a href="<?=$this->recordLink()->getUrl($current['id'])?>"><?=$this->transEsc("source_$source", array(), $source)?></a><?
+          }
+        }
+        if ($i > 1) {
+          ?>)</span><?
+        }?>
+      </div>
+      <? endif; ?>
+      
+      
       <div class="callnumAndLocation">
         <? if ($this->driver->supportsAjaxStatus()): ?>
           <strong class="hideIfDetailed"><?=$this->transEsc('Call Number')?>:</strong>

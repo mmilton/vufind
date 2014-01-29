@@ -1,6 +1,7 @@
 <?=$this->doctype('HTML5')?>
 <html lang="<?=$this->layout()->userLang?>">
   <head>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
     <?$this->headThemeResources()?>
     <?=$this->headMeta()?>
     <?=$this->headTitle()?>
@@ -69,7 +70,10 @@
         <? endif; ?>
       </div>
       
-      <? if((!isset($this->layout()->showBreadcrumbs) || $this->layout()->showBreadcrumbs == true) && $this->layout()->breadcrumbs !== false): ?>
+      <? if((!isset($this->layout()->showBreadcrumbs) || $this->layout()->showBreadcrumbs == true)
+        && !empty($this->layout()->breadcrumbs)
+        && $this->layout()->breadcrumbs !== false
+      ): ?>
         <ul class="breadcrumb">
         <? if(is_array($this->layout()->breadcrumbs)): ?>
           <? if(count($this->layout()->breadcrumbs) > 1): ?>

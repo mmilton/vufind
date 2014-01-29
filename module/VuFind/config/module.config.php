@@ -84,7 +84,6 @@ $config = array(
             },
         ),
         'invokables' => array(
-            'admin' => 'VuFind\Controller\AdminController',
             'ajax' => 'VuFind\Controller\AjaxController',
             'alphabrowse' => 'VuFind\Controller\AlphabrowseController',
             'author' => 'VuFind\Controller\AuthorController',
@@ -377,8 +376,14 @@ $config = array(
                             $sm->getServiceLocator()->get('VuFind\ILSConnection')
                         );
                     },
+                    'multiils' => function ($sm) {
+                        return new \VuFind\Auth\MultiILS(
+                            $sm->getServiceLocator()->get('VuFind\ILSConnection')
+                        );
+                    },
                 ),
                 'invokables' => array(
+                    'choiceauth' => 'VuFind\Auth\ChoiceAuth',
                     'database' => 'VuFind\Auth\Database',
                     'ldap' => 'VuFind\Auth\LDAP',
                     'multiauth' => 'VuFind\Auth\MultiAuth',
@@ -469,9 +474,14 @@ $config = array(
                 'factories' => array(
                     'solr' => function ($sm) {
                         $cacheDir = $sm->getServiceLocator()->get('VuFind\CacheManager')->getCacheDir(false);
+                        $hierarchyFilters = $sm->getServiceLocator()->get('VuFind\Config')->get('HierarchyDefault');
+                        $filters = isset($hierarchyFilters->HierarchyTree->filterQueries)
+                          ? $hierarchyFilters->HierarchyTree->filterQueries->toArray()
+                          : array();
                         return new \VuFind\Hierarchy\TreeDataSource\Solr(
                             $sm->getServiceLocator()->get('VuFind\Search'),
-                            rtrim($cacheDir, '/') . '/hierarchy'
+                            rtrim($cacheDir, '/') . '/hierarchy',
+                            $filters
                         );
                     },
                 ),
@@ -618,6 +628,11 @@ $config = array(
                     },
                     'summonresults' => function ($sm) {
                         return new \VuFind\Recommend\SummonResults(
+                            $sm->getServiceLocator()->get('VuFind\SearchResultsPluginManager')
+                        );
+                    },
+                    'summontopics' => function ($sm) {
+                        return new \VuFind\Recommend\SummonTopics(
                             $sm->getServiceLocator()->get('VuFind\SearchResultsPluginManager')
                         );
                     },
@@ -1030,6 +1045,8 @@ $recordRoutes = array(
     'summonrecord' => 'SummonRecord',
     'worldcatrecord' => 'WorldcatRecord'
 );
+// Record sub-routes are generally used to access tab plug-ins, but a few
+// URLs are hard-coded to specific actions; this array lists those actions.
 $nonTabRecordActions = array(
     'AddComment', 'DeleteComment', 'AddTag', 'Save', 'Email', 'SMS', 'Cite',
     'Export', 'RDF', 'Hold', 'BlockedHold', 'Home'
@@ -1040,8 +1057,6 @@ $listRoutes = array('userList' => 'MyList', 'editList' => 'EditList');
 
 // Define static routes -- Controller/Action strings
 $staticRoutes = array(
-    'Admin/Config', 'Admin/DeleteExpiredSearches', 'Admin/EnableAutoConfig',
-    'Admin/Home', 'Admin/Maintenance', 'Admin/SocialStats', 'Admin/Statistics',
     'Alphabrowse/Home', 'Author/Home', 'Author/Search',
     'Authority/Home', 'Authority/Record', 'Authority/Search',
     'Browse/Author', 'Browse/Dewey', 'Browse/Era', 'Browse/Genre', 'Browse/Home',

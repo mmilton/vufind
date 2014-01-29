@@ -56,12 +56,13 @@ class ExtendedIni implements FileLoaderInterface
      *
      * @return TextDomain
      * @throws InvalidArgumentException
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function load($locale, $filename)
     {
         $this->data = new TextDomain();
         if (!file_exists($filename)) {
-            throw new InvalidArgumentException("Ini file '".$data."' not found");
+            throw new InvalidArgumentException("Ini file '".$filename."' not found");
         }
 
         // Load base data:
@@ -100,7 +101,14 @@ class ExtendedIni implements FileLoaderInterface
                         );
 
                         // Store the key/value pair (allow empty values -- sometimes
-                        // we want to replace a language token with a blank string):
+                        // we want to replace a language token with a blank string,
+                        // but Zend translator doesn't support them so replace with
+                        // a zero-width non-joiner):
+                        if ($value === '') {
+                            $value = html_entity_decode(
+                                '&#x200C;', ENT_NOQUOTES, 'UTF-8'
+                            );
+                        }
                         $this->data[$key] = $value;
                     }
                 }

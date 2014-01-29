@@ -29,12 +29,12 @@ function toggleMenu(elemId) {
 }
 
 function moreFacets(name) {
-    $("#more"+name).hide();
+    $("#more"+name).addClass("offscreen");
     $("#narrowGroupHidden_"+name).removeClass("offscreen");
 }
 
 function lessFacets(name) {
-    $("#more"+name).show();
+    $("#more"+name).removeClass("offscreen");
     $("#narrowGroupHidden_"+name).addClass("offscreen");
 }
 
@@ -287,7 +287,7 @@ function updateOrFacets(url, op) {
 function setupOrFacets() {
   var facets = $('.facetOR');
   for(var i=0;i<facets.length;i++) {
-    $facet = $(facets[i]);
+    var $facet = $(facets[i]);
     if($facet.hasClass('applied')) {
       $facet.prepend('<input type="checkbox" checked onChange="updateOrFacets($(this).parent().attr(\'href\'), this)"/>');
     } else {
@@ -366,6 +366,33 @@ $(document).ready(function(){
         $("link[media='print']").attr("media", "all");
         window.print();
     }
+    
+    // Collapsing facets
+    $('.narrowList dt').click(function(){
+      $(this).parent().toggleClass('open');
+      $(this.className.replace('facet_', '#narrowGroupHidden_')).toggleClass('open');
+    });
+
+    // Support holds cancel list buttons:
+    function cancelHolds(type) {
+      var typeIDS = type+'IDS';
+      var ids = $('[name="'+typeIDS+'[]"]');
+      var cancelIDS = [];
+      for(var i=0;i<ids.length;i++) {
+        cancelIDS.push(ids[i].value);
+      }
+      var postParams = {'confirm':0};
+      postParams[type] = 1;
+      postParams[typeIDS] = cancelIDS;
+      getLightbox('MyResearch', 'Holds', '', '', '', 'MyResearch', 'Holds', '', postParams);
+      return false;
+    }
+    $('.holdCancel').unbind('click').click(function(){
+      return cancelHolds('cancelSelected');
+    });
+    $('.holdCancelAll').unbind('click').click(function(){
+      return cancelHolds('cancelAll');
+    });
 
     //ContextHelp
     contextHelp.init();

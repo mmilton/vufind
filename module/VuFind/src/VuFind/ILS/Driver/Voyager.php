@@ -31,8 +31,9 @@ use File_MARC, PDO, PDOException,
     VuFind\Exception\Date as DateException,
     VuFind\Exception\ILS as ILSException,
     VuFind\I18n\Translator\TranslatorAwareInterface,
-    Zend\Validator\EmailAddress as EmailAddressValidator;
-
+    Zend\Validator\EmailAddress as EmailAddressValidator,
+    Zend\Log\LoggerInterface;
+    
 /**
  * Voyager ILS Driver
  *
@@ -43,7 +44,8 @@ use File_MARC, PDO, PDOException,
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     http://vufind.org/wiki/vufind2:building_an_ils_driver Wiki
  */
-class Voyager extends AbstractBase implements TranslatorAwareInterface
+class Voyager extends AbstractBase
+    implements TranslatorAwareInterface, \Zend\Log\LoggerAwareInterface
 {
     /**
      * Translator (or null if unavailable)
@@ -82,6 +84,13 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
     protected $dateFormat;
 
     /**
+     * Logger (or false for none)
+     *
+     * @var LoggerInterface|bool
+     */
+    protected $logger = false;
+    
+    /**
      * Constructor
      *
      * @param \VuFind\Date\Converter $dateConverter Date converter object
@@ -89,6 +98,66 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
     public function __construct(\VuFind\Date\Converter $dateConverter)
     {
         $this->dateFormat = $dateConverter;
+    }
+
+    /**
+     * Set the logger
+     *
+     * @param LoggerInterface $logger Logger to use.
+     *
+     * @return void
+     */
+    public function setLogger(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+
+    /**
+     * Log a debug message.
+     *
+     * @param string $msg Message to log.
+     *
+     * @return void
+     */
+    protected function debug($msg)
+    {
+        if ($this->logger) {
+            $this->logger->debug(get_class($this) . ": $msg");
+        }
+    }
+
+    /**
+     * Log an SQL statement debug message.
+     * 
+     * @param string $func   Function name or description
+     * @param string $sql    The SQL statement
+     * @param array  $params SQL bind parameters
+     * 
+     * @return void
+     */
+    protected function debugSQL($func, $sql, $params = null)
+    {
+        if ($this->logger) {
+            $logString = "[$func] $sql";
+            if (isset($params)) {
+                $logString .= ', params: ' . print_r($params, true);
+            }
+            $this->debug($logString);
+        }
+    }
+    
+    /**
+     * Log an error message.
+     *
+     * @param string $msg Message to log.
+     *
+     * @return void
+     */
+    protected function error($msg)
+    {
+        if ($this->logger) {
+            $this->logger->err(get_class($this) . ": $msg");
+        }
     }
 
     /**
@@ -135,6 +204,9 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
             );
             $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
+            $this->error(
+                "PDO Connection failed ($this->dbName): " . $e->getMessage()
+            );
             throw $e;
         }
     }
@@ -201,8 +273,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
             // Execute SQL
             $sql = "SELECT * FROM $this->dbName.ITEM_STATUS_TYPE";
             try {
-                $sqlStmt = $this->db->prepare($sql);
-                $sqlStmt->execute();
+                $sqlStmt = $this->executeSQL($sql);
             } catch (PDOException $e) {
                 throw new ILSException($e->getMessage());
             }
@@ -452,8 +523,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
         foreach ($possibleQueries as $sql) {
             // Execute SQL
             try {
-                $sqlStmt = $this->db->prepare($sql['string']);
-                $sqlStmt->execute($sql['bind']);
+                $sqlStmt = $this->executeSQL($sql);
             } catch (PDOException $e) {
                 throw new ILSException($e->getMessage());
             }
@@ -754,8 +824,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
             $sql = "SELECT NVL(LOCATION_DISPLAY_NAME, LOCATION_NAME) as location " .
                 "FROM {$this->dbName}.LOCATION WHERE LOCATION_ID=:id";
             $bind = array('id' => $id);
-            $sqlStmt = $this->db->prepare($sql);
-            $sqlStmt->execute($bind);
+            $sqlStmt = $this->executeSQL($sql, $bind);
             $sqlRow = $sqlStmt->fetch(PDO::FETCH_ASSOC);
             $cache[$id] = utf8_encode($sqlRow['LOCATION']);
         }
@@ -793,6 +862,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
      * @throws DateException
      * @throws ILSException
      * @return array Keyed data
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     protected function processHoldingData($data, $patron = false)
     {
@@ -898,8 +968,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
         foreach ($possibleQueries as $sql) {
             // Execute SQL
             try {
-                $sqlStmt = $this->db->prepare($sql['string']);
-                $sqlStmt->execute($sql['bind']);
+                $sqlStmt = $this->executeSQL($sql);
             } catch (PDOException $e) {
                 throw new ILSException($e->getMessage());
             }
@@ -948,8 +1017,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
                "order by SERIAL_ISSUES.ISSUE_ID DESC";
         try {
             $data = array();
-            $sqlStmt = $this->db->prepare($sql);
-            $sqlStmt->execute(array(':id' => $id));
+            $sqlStmt = $this->executeSQL($sql, array(':id' => $id));
             while ($row = $sqlStmt->fetch(PDO::FETCH_ASSOC)) {
                 $data[] = array('issue' => $row['ENUMCHRON']);
             }
@@ -985,13 +1053,13 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
                "lower(PATRON.{$login_field}) = :login AND " .
                "lower(PATRON_BARCODE.PATRON_BARCODE) = :barcode";
         try {
+            $bindLogin = strtolower(utf8_decode($login));
+            $bindBarcode = strtolower(utf8_decode($barcode));
+            
+            $this->debugSQL(__FUNCTION__, $sql, array(':login' => $bindLogin));
             $sqlStmt = $this->db->prepare($sql);
-            $sqlStmt->bindParam(
-                ':login', strtolower(utf8_decode($login)), PDO::PARAM_STR
-            );
-            $sqlStmt->bindParam(
-                ':barcode', strtolower(utf8_decode($barcode)), PDO::PARAM_STR
-            );
+            $sqlStmt->bindParam(':login', $bindLogin, PDO::PARAM_STR);
+            $sqlStmt->bindParam(':barcode', $bindBarcode, PDO::PARAM_STR);
             $sqlStmt->execute();
             $row = $sqlStmt->fetch(PDO::FETCH_ASSOC);
             if (isset($row['PATRON_ID']) && ($row['PATRON_ID'] != '')) {
@@ -1078,6 +1146,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
      *
      * @throws DateException
      * @return array Keyed data for display by template files
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     protected function processMyTransactionsData($sqlRow, $patron = false)
     {
@@ -1138,8 +1207,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
         $sql = $this->buildSqlFromArray($sqlArray);
 
         try {
-            $sqlStmt = $this->db->prepare($sql['string']);
-            $sqlStmt->execute($sql['bind']);
+            $sqlStmt = $this->executeSQL($sql);
             while ($row = $sqlStmt->fetch(PDO::FETCH_ASSOC)) {
                 $processRow = $this->processMyTransactionsData($row, $patron);
                 $transList[] = $processRow;
@@ -1265,8 +1333,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
         $sql = $this->buildSqlFromArray($sqlArray);
 
         try {
-            $sqlStmt = $this->db->prepare($sql['string']);
-            $sqlStmt->execute($sql['bind']);
+            $sqlStmt = $this->executeSQL($sql);
             while ($row = $sqlStmt->fetch(PDO::FETCH_ASSOC)) {
                 $processFine= $this->processFinesData($row);
                 $fineList[] = $processFine;
@@ -1432,8 +1499,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
         $sql = $this->buildSqlFromArray($sqlArray);
 
         try {
-            $sqlStmt = $this->db->prepare($sql['string']);
-            $sqlStmt->execute($sql['bind']);
+            $sqlStmt = $this->executeSQL($sql);
             while ($sqlRow = $sqlStmt->fetch(PDO::FETCH_ASSOC)) {
                 $holds = $this->processMyHoldsData($sqlRow);
                 $holdList[] = $holds;
@@ -1471,8 +1537,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
                "PATRON_GROUP.PATRON_GROUP_ID (+) " .
                "AND PATRON.PATRON_ID = :id";
         try {
-            $sqlStmt = $this->db->prepare($sql);
-            $sqlStmt->execute(array(':id' => $patron['id']));
+            $sqlStmt = $this->executeSQL($sql, array(':id' => $patron['id']));
             $patron = array();
             while ($row = $sqlStmt->fetch(PDO::FETCH_ASSOC)) {
                 if (!empty($row['FIRST_NAME'])) {
@@ -1520,6 +1585,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
      * @param array  $details  Item details from getHoldings return array
      *
      * @return string          URL to ILS's OPAC's place hold screen.
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function getHoldLink($recordId, $details)
     {
@@ -1573,8 +1639,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
         $sql .= "and LINE_ITEM.CREATE_DATE >= to_date(:startdate, 'dd-mm-yyyy') " .
                "and LINE_ITEM.CREATE_DATE < to_date(:enddate, 'dd-mm-yyyy')";
         try {
-            $sqlStmt = $this->db->prepare($sql);
-            $sqlStmt->execute($bindParams);
+            $sqlStmt = $this->executeSQL($sql, $bindParams);
             $row = $sqlStmt->fetch(PDO::FETCH_ASSOC);
             $items['count'] = $row['COUNT'];
         } catch (PDOException $e) {
@@ -1623,8 +1688,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
                "where rownum <= :endRow) " .
                "where rnum >= :startRow";
         try {
-            $sqlStmt = $this->db->prepare($sql);
-            $sqlStmt->execute($bindParams);
+            $sqlStmt = $this->executeSQL($sql, $bindParams);
             while ($row = $sqlStmt->fetch(PDO::FETCH_ASSOC)) {
                 $items['results'][]['id'] = $row['BIB_ID'];
             }
@@ -1687,8 +1751,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
         $sql = "select distinct lower(FUND.FUND_NAME) as name " .
             "from $this->dbName.FUND {$whereClause} order by name";
         try {
-            $sqlStmt = $this->db->prepare($sql);
-            $sqlStmt->execute($bindParams);
+            $sqlStmt = $this->executeSQL($sql, $bindParams);
             while ($row = $sqlStmt->fetch(PDO::FETCH_ASSOC)) {
                 // Process blacklist and whitelist to skip illegal values:
                 if ((is_array($blacklist) && in_array($row['NAME'], $blacklist))
@@ -1743,8 +1806,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
                "group by DEPARTMENT.DEPARTMENT_ID, DEPARTMENT_NAME " .
                "order by DEPARTMENT_NAME";
         try {
-            $sqlStmt = $this->db->prepare($sql);
-            $sqlStmt->execute();
+            $sqlStmt = $this->executeSQL($sql);
             while ($row = $sqlStmt->fetch(PDO::FETCH_ASSOC)) {
                 $deptList[$row['DEPARTMENT_ID']] = $row['DEPARTMENT_NAME'];
             }
@@ -1767,8 +1829,6 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
     {
         $instList = array();
 
-        $bindParams = array();
-
         $sql = "select INSTRUCTOR.INSTRUCTOR_ID, " .
                "INSTRUCTOR.LAST_NAME || ', ' || INSTRUCTOR.FIRST_NAME as NAME " .
                "from $this->dbName.RESERVE_LIST, " .
@@ -1779,8 +1839,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
                "group by INSTRUCTOR.INSTRUCTOR_ID, LAST_NAME, FIRST_NAME " .
                "order by LAST_NAME";
         try {
-            $sqlStmt = $this->db->prepare($sql);
-            $sqlStmt->execute($bindParams);
+            $sqlStmt = $this->executeSQL($sql);
             while ($row = $sqlStmt->fetch(PDO::FETCH_ASSOC)) {
                 $instList[$row['INSTRUCTOR_ID']] = $row['NAME'];
             }
@@ -1802,9 +1861,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
     public function getCourses()
     {
         $courseList = array();
-
-        $bindParams = array();
-
+        
         $sql = "select COURSE.COURSE_NUMBER || ': ' || COURSE.COURSE_NAME as NAME," .
                " COURSE.COURSE_ID " .
                "from $this->dbName.RESERVE_LIST, " .
@@ -1815,8 +1872,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
                "group by COURSE.COURSE_ID, COURSE_NUMBER, COURSE_NAME " .
                "order by COURSE_NUMBER";
         try {
-            $sqlStmt = $this->db->prepare($sql);
-            $sqlStmt->execute($bindParams);
+            $sqlStmt = $this->executeSQL($sql);
             while ($row = $sqlStmt->fetch(PDO::FETCH_ASSOC)) {
                 $courseList[$row['COURSE_ID']] = $row['NAME'];
             }
@@ -1846,7 +1902,6 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
     public function findReserves($course, $inst, $dept)
     {
         $recordList = array();
-
         $reserveWhere = array();
         $bindParams = array();
 
@@ -1933,8 +1988,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
                "  ) subquery ON mfhd_master.mfhd_id = subquery.mfhd_id ";
 
         try {
-            $sqlStmt = $this->db->prepare($sql);
-            $sqlStmt->execute($bindParams);
+            $sqlStmt = $this->executeSQL($sql, $bindParams);
             while ($row = $sqlStmt->fetch(PDO::FETCH_ASSOC)) {
                 $recordList[] = $row;
             }
@@ -1959,8 +2013,7 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
                "from $this->dbName.BIB_MASTER " .
                "where BIB_MASTER.SUPPRESS_IN_OPAC='Y'";
         try {
-            $sqlStmt = $this->db->prepare($sql);
-            $sqlStmt->execute();
+            $sqlStmt = $this->executeSQL($sql);
             while ($row = $sqlStmt->fetch(PDO::FETCH_ASSOC)) {
                 $list[] = $row['BIB_ID'];
             }
@@ -1995,5 +2048,30 @@ class Voyager extends AbstractBase implements TranslatorAwareInterface
     {
         return null !== $this->translator
             ? $this->translator->translate($msg) : $msg;
+    }
+    
+    /**
+     * Execute an SQL query
+     * 
+     * @param string|array $sql  SQL statement (string or array that includes
+     * bind params)
+     * @param array        $bind Bind parameters (if $sql is string)
+     * 
+     * @return PDOStatement
+     */
+    protected function executeSQL($sql, $bind = array())
+    {
+        if (is_array($sql)) {
+            $bind = $sql['bind'];
+            $sql = $sql['string'];
+        }
+        if ($this->logger) {
+            list(, $caller) = debug_backtrace(false);
+            $this->debugSQL($caller['function'], $sql, $bind);
+        }
+        $sqlStmt = $this->db->prepare($sql);
+        $sqlStmt->execute($bind);
+
+        return $sqlStmt;
     }
 }

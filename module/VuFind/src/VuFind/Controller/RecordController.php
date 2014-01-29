@@ -72,9 +72,11 @@ class RecordController extends AbstractRecord
      */
     public function holdAction()
     {
+        $driver = $this->loadRecord();
+        
         // If we're not supposed to be here, give up now!
         $catalog = $this->getILS();
-        $checkHolds = $catalog->checkFunction("Holds");
+        $checkHolds = $catalog->checkFunction("Holds", $driver->getUniqueID());
         if (!$checkHolds) {
             return $this->forwardTo('Record', 'Home');
         }
@@ -92,7 +94,6 @@ class RecordController extends AbstractRecord
         }
 
         // Block invalid requests:
-        $driver = $this->loadRecord();
         if (!$catalog->checkRequestIsValid(
             $driver->getUniqueID(), $gatheredDetails, $patron
         )) {
@@ -128,6 +129,9 @@ class RecordController extends AbstractRecord
                 if (isset($results['success']) && $results['success'] == true) {
                     $this->flashMessenger()->setNamespace('info')
                         ->addMessage('hold_place_success');
+                    if ($this->inLightbox()) {
+                        return false;
+                    }
                     return $this->redirect()->toRoute('myresearch-holds');
                 } else {
                     // Failure: use flash messenger to display messages, stay on
@@ -148,14 +152,19 @@ class RecordController extends AbstractRecord
         $defaultRequired = $this->holds()->getDefaultRequiredDate($checkHolds);
         $defaultRequired = $this->getServiceLocator()->get('VuFind\DateConverter')
             ->convertToDisplayDate("U", $defaultRequired);
+        try {
+            $defaultPickup
+                = $catalog->getDefaultPickUpLocation($patron, $gatheredDetails);
+        } catch (\Exception $e) {
+            $defaultPickup = false;
+        }
+
 
         return $this->createViewModel(
             array(
                 'gatheredDetails' => $gatheredDetails,
                 'pickup' => $pickup,
-                'defaultPickup' => $catalog->getDefaultPickUpLocation(
-                    $patron, $gatheredDetails
-                ),
+                'defaultPickup' => $defaultPickup,
                 'homeLibrary' => $this->getUser()->home_library,
                 'extraHoldFields' => $extraHoldFields,
                 'defaultRequiredDate' => $defaultRequired
