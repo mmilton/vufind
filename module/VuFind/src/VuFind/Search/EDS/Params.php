@@ -168,6 +168,26 @@ class Params extends \VuFind\Search\Base\Params
     }
     
     /**
+     * Return an array structure containing information about all current filters.
+     *
+     * @param bool $excludeCheckboxFilters Should we exclude checkbox filters from
+     * the list (to be used as a complement to getCheckboxFacets()).
+     *
+     * @return array                       Field, values and translation status
+     */
+    public function getFilterList($excludeCheckboxFilters = false)
+    {
+    	$filters = parent::getFilterList($excludeCheckboxFilters);
+    	$label = $this->getFacetLabel('SEARCHMODE');
+    	if(isset($filters[$label])){
+    		foreach($filters[$label] as $i => $val){
+    			$filter[$label][$i]['suppressDisplay'] = true;
+    		}
+    	}
+    	return $filters;
+    }
+    
+    /**
      * Set up limiter based on VuFind settings.
      *
      * @param ParamBag $params Parameter collection to update
@@ -296,10 +316,12 @@ class Params extends \VuFind\Search\Base\Params
 	 */
 	public function getFacetLabel($field)
 	{
-		//Also store Limiter IDs/Values in the config file
+		//Also store Limiter/Search Mode IDs/Values in the config file
 		$facetId = $field;
 		if(substr($field,0,6) == 'LIMIT|')
 			$facetId = substr($field,6);
+		if(substr($field,0,11) == 'SEARCHMODE|')
+			$facetId = substr($field,11);
 		return isset($this->facetConfig[$facetId])
 		? $this->facetConfig[$facetId] : $facetId;
 	}
