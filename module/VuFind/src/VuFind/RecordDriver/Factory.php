@@ -21,7 +21,7 @@
  *
  * @category VuFind2
  * @package  RecordDrivers
- * @author   Luke O'Sullivan <l.osullivan@swansea.ac.uk>
+ * @author   Demian Katz <demian.katz@villanova.edu>
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     http://vufind.org/wiki/vufind2:hierarchy_components Wiki
  */
@@ -33,7 +33,7 @@ use Zend\ServiceManager\ServiceManager;
  *
  * @category VuFind2
  * @package  RecordDrivers
- * @author   Luke O'Sullivan <l.osullivan@swansea.ac.uk>
+ * @author   Demian Katz <demian.katz@villanova.edu>
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     http://vufind.org/wiki/vufind2:hierarchy_components Wiki
  */
@@ -62,7 +62,7 @@ class Factory
      *
      * @return Missing
      */
-    public function getMissing(ServiceManager $sm)
+    public static function getMissing(ServiceManager $sm)
     {
         return new Missing(
             $sm->getServiceLocator()->get('VuFind\Config')->get('config')
@@ -76,7 +76,7 @@ class Factory
      *
      * @return SolrAuth
      */
-    public function getSolrAuth(ServiceManager $sm)
+    public static function getSolrAuth(ServiceManager $sm)
     {
         return new SolrAuth(
             $sm->getServiceLocator()->get('VuFind\Config')->get('config'),
@@ -92,7 +92,7 @@ class Factory
      *
      * @return Pazpar2
      */
-    public function getPazpar2(ServiceManager $sm)
+    public static function getPazpar2(ServiceManager $sm)
     {
         return new Pazpar2(
             $sm->getServiceLocator()->get('VuFind\Config')->get('config'),
@@ -108,7 +108,7 @@ class Factory
      *
      * @return SolrDefault
      */
-    public function getSolrDefault(ServiceManager $sm)
+    public static function getSolrDefault(ServiceManager $sm)
     {
         return new SolrDefault(
             $sm->getServiceLocator()->get('VuFind\Config')->get('config'),
@@ -124,7 +124,7 @@ class Factory
      *
      * @return SolrMarc
      */
-    public function getSolrMarc(ServiceManager $sm)
+    public static function getSolrMarc(ServiceManager $sm)
     {
         $driver = new SolrMarc(
             $sm->getServiceLocator()->get('VuFind\Config')->get('config'),
@@ -146,7 +146,7 @@ class Factory
      *
      * @return SolrReserves
      */
-    public function getSolrReserves(ServiceManager $sm)
+    public static function getSolrReserves(ServiceManager $sm)
     {
         return new SolrReserves(
             $sm->getServiceLocator()->get('VuFind\Config')->get('config'),
@@ -162,7 +162,7 @@ class Factory
      *
      * @return SolrWeb
      */
-    public function getSolrWeb(ServiceManager $sm)
+    public static function getSolrWeb(ServiceManager $sm)
     {
         return new SolrWeb(
             $sm->getServiceLocator()->get('VuFind\Config')->get('config'),
@@ -179,7 +179,7 @@ class Factory
      *
      * @return Summon
      */
-    public function getSummon(ServiceManager $sm)
+    public static function getSummon(ServiceManager $sm)
     {
         $summon = $sm->getServiceLocator()->get('VuFind\Config')->get('Summon');
         $driver = new Summon(
@@ -199,7 +199,7 @@ class Factory
      *
      * @return WorldCat
      */
-    public function getWorldCat(ServiceManager $sm)
+    public static function getWorldCat(ServiceManager $sm)
     {
         return new WorldCat(
             $sm->getServiceLocator()->get('VuFind\Config')->get('config'),
