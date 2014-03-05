@@ -46,7 +46,7 @@ class Factory
      *
      * @return EDS
      */
-    public function getEDS(ServiceManager $sm)
+    public static function getEDS(ServiceManager $sm)
     {
         $eds = $sm->getServiceLocator()->get('VuFind\Config')->get('EDS');
         return new EDS(
