@@ -32,7 +32,6 @@ use VuFindSearch\Query\AbstractQuery;
 use VuFindSearch\Query\QueryGroup;
 use VuFindSearch\Query\Query;
 use VuFindSearch\ParamBag;
-use EBSCO\EdsApi\SearchRequestModel as SearchRequestModel;
 /**
  * 
  * @category VuFind2

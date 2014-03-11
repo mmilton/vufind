@@ -24,7 +24,7 @@
  * @author   Michelle Milton <mmilton@epnet.com>
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  */
-namespace EBSCO\EdsApi;
+namespace VuFindSearch\Backend\EDS;
 /**
  * EBSCO EDS API Search Model
  * 

@@ -29,7 +29,7 @@
 
 namespace VuFind\Search\Factory;
 
-use EBSCO\EdsApi\Zend2 as Connector;
+use VuFindSearch\Backend\EDS\Zend2 as Connector;
 use VuFindSearch\Backend\BackendInterface;
 use VuFindSearch\Backend\EDS\Response\RecordCollectionFactory;
 use VuFindSearch\Backend\EDS\QueryBuilder;

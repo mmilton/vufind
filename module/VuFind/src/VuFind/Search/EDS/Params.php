@@ -26,7 +26,7 @@
  */
 namespace VuFind\Search\eds;
 use VuFindSearch\ParamBag;
-use EBSCO\EdsApi\SearchRequestModel;
+use VuFindSearch\Backend\EDS\SearchRequestModel as SearchRequestModel;
 
 class Params extends \VuFind\Search\Base\Params
 {
@@ -404,8 +404,6 @@ class Params extends \VuFind\Search\Base\Params
 				$this->addFilter('LIMIT|'.$key.':'.$val);
 			}
 		}
-				
 	}
-	
-	
+
 }

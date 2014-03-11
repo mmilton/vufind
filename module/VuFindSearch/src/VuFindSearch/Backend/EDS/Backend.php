@@ -28,10 +28,7 @@
 
 namespace VuFindSearch\Backend\EDS;
 
-use EBSCO\EdsApi\Zend2 as ApiClient; 
-use EBSCO\EdsApi\EdsApi_REST_Base;
-use EBSCO\EdsApi\EbscoEdsApiException;
-use EBSCO\EdsApi\SearchRequestModel as SearchRequestModel;
+use VuFindSearch\Backend\EDS\Zend2 as ApiClient; 
 
 use VuFindSearch\Query\AbstractQuery;
 
