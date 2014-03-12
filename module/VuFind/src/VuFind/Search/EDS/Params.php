@@ -27,6 +27,7 @@
 namespace VuFind\Search\eds;
 use VuFindSearch\ParamBag;
 use VuFindSearch\Backend\EDS\SearchRequestModel as SearchRequestModel;
+use VuFind\Search\EDS\QueryAdapter;
 
 class Params extends \VuFind\Search\Base\Params
 {
@@ -405,5 +406,22 @@ class Params extends \VuFind\Search\Base\Params
 			}
 		}
 	}
+	
+	/**
+	 * Override for build a string for onscreen display showing the
+	 *   query used in the search. It will include field level operators instead 
+	 *   of group operators (Since EDS only uses one group.)
+	 *
+	 * @return string user friendly version of 'query'
+	 */
 
+    public function getDisplayQuery()
+    {
+        // Set up callbacks:
+        $translate = array($this, 'translate');
+        $showField = array($this->getOptions(), 'getHumanReadableFieldName');
+
+        // Build display query:
+        return QueryAdapter::display($this->getQuery(), $translate, $showField);
+    }
 }

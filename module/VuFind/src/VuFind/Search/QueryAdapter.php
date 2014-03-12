@@ -59,7 +59,9 @@ abstract class QueryAdapter
     {
         if (isset($search['l'])) {
             $handler = isset($search['i']) ? $search['i'] : $search['f'];
-            return new Query($search['l'], $handler);
+            return new Query(
+                $search['l'], $handler, isset($search['o']) ? $search['o'] : null
+            );
         } elseif (isset($search['g'])) {
             $operator = $search['g'][0]['b'];
             return new QueryGroup(
@@ -184,11 +186,15 @@ abstract class QueryAdapter
                     $typeArr = $request->get('type' . $groupCount);
                     $handler = (isset($typeArr[$i]) && !empty($typeArr[$i]))
                         ? $typeArr[$i] : $defaultHandler;
-
+                    
+                    $opArr = $request->get('op' . $groupCount);
+                    $operator = (isset($opArr[$i]) && !empty($opArr[$i]))
+                        ? $opArr[$i] : null;
+                    
                     // Add term to this group
                     $boolArr = $request->get('bool' . $groupCount);
                     $lastBool = isset($boolArr[0]) ? $boolArr[0] : null;
-                    $group[] = new Query($lookfor[$i], $handler);
+                    $group[] = new Query($lookfor[$i], $handler, $operator);
                 }
             }
 
@@ -242,6 +248,7 @@ abstract class QueryAdapter
                 $retVal[] = array(
                     'f' => $current->getHandler(),
                     'l' => $current->getString(),
+                	'o' => $current->getOperator(),
                     'b' => $operator
                 );
             }

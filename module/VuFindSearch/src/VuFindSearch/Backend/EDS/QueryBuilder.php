@@ -121,12 +121,12 @@ class QueryBuilder
 			if ($params instanceof QueryGroup) {
 				$thisGroup = array();
 				// Process each search group
-				foreach ($params->getQueries() as $group) {
+				foreach ($params->getQueries() as $q) {
 					// Build this group individually as a basic search
-					$op = $params->getOperator();
+					$op = $q->getOperator();
 					if($params->isNegated())
 						$op = 'NOT';
-					$grp  = $this->queryToEdsQuery($group, $op);
+					$grp  = $this->queryToEdsQuery($q, $op);
 					$groups[] = $grp;
 				}
 			} else {

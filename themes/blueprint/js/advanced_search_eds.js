@@ -2,14 +2,67 @@
 
 var nextGroupNumber = 0;
 var groupSearches = [];
-
+var booleanSearchOperators = [ "AND", "OR", "NOT"];
 function jsEntityEncode(str)
 {
     var new_str = str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     return new_str;
 }
 
+function addSearch(group, term, field, op)
+{
+    if (term  == undefined) {term  = '';}
+    if (field == undefined) {field = '';}
+    if (op == undefined) {op = 'AND';}
 
+    var newSearch = '<div class="advRow">';
+
+    // Label
+    newSearch += '<div class="label">';
+    if (groupSearches[group] == 0) {
+        newSearch += '<label for="search_lookfor' + group + '_' + groupSearches[group] + '">' + searchLabel + ':</label>&nbsp;';
+    }
+
+    newSearch +='<select id="search_op' + group + '_' + groupSearches[group] + '" name="op' + group + '[]"'
+    if (groupSearches[group] == 0) 
+    	newSearch += 'class="hide" ';
+    newSearch += ">'";
+    for(var i in booleanSearchOperators){
+    	var searchOp = booleanSearchOperators[i];
+    	var sel = '';
+    	if(op == searchOp)
+    		sel = ' selected=selected ';
+    	newSearch += '<option value="' + searchOp + '" ' + sel + ">" + searchOp +"</option>";
+    }
+    newSearch += '</select>';
+    
+    newSearch += '</div>';  //end label/op dropdown
+    // Terms
+    newSearch += '<div class="terms"><input type="text" id="search_lookfor' + group + '_' + groupSearches[group] + '" name="lookfor' + group + '[]" size="50" value="' + jsEntityEncode(term) + '"/></div>';
+
+    // Field
+    newSearch += '<div class="field"><label for="search_type' + group + '_' + groupSearches[group] + '">' + searchFieldLabel + '</label> ';
+    newSearch += '<select id="search_type' + group + '_' + groupSearches[group] + '" name="type' + group + '[]">';
+    for (var key in searchFields) {
+        newSearch += '<option value="' + key + '"';
+        if (key == field) {
+            newSearch += ' selected="selected"';
+        }
+        newSearch += ">" + searchFields[key] + "</option>";
+    }
+    newSearch += '</select>';
+    newSearch += '</div>';
+
+    // Handle floating nonsense
+    newSearch += '<span class="clearer"></span>';
+    newSearch += '</div>';
+
+    // Done
+    $("#group" + group + "SearchHolder").append(newSearch);
+
+    // Actual value doesn't matter once it's not zero.
+    groupSearches[group]++;
+}
 
 function reNumGroup(oldGroup, newNum)
 {
@@ -61,10 +114,15 @@ function reSortGroups()
         groups++;
     });
     nextGroupNumber = groups;
-    //always hide these for EDS API!
-    $("#groupJoin").hide();
-    $("#delete_link_0").hide();
-    
+
+    // Hide some group-related controls if there is only one group:
+    if (nextGroupNumber == 1) {
+        $("#groupJoin").hide();
+        $("#delete_link_0").hide();
+    } else {
+        $("#groupJoin").show();
+        $("#delete_link_0").show();
+    }
 }
 
 function addGroup(firstTerm, firstField, join)
@@ -74,14 +132,10 @@ function addGroup(firstTerm, firstField, join)
     if (join       == undefined) {join       = '';}
 
     var newGroup = '<div id="group' + nextGroupNumber + '" class="group group' + (nextGroupNumber % 2) + '">';
+    newGroup += '<div class="groupSearchDetails">';
 
-    newGroup += '<div id="group' + nextGroupNumber + 'SearchHolder" class="groupSearchHolder">';
-    newGroup += '<div class="advRow">';
-    if(0 == nextGroupNumber){
-    	newGroup += '<div class="operator hide">';
-    }else
-    	newGroup += '<div class="operator">';
-    	
+    // Boolean operator drop-down
+    newGroup += '<div class="join hide"><label for="search_bool' + nextGroupNumber + '">' + searchMatch + ':</label> ';
     newGroup += '<select id="search_bool' + nextGroupNumber + '" name="bool' + nextGroupNumber + '[]">';
     for (var key in searchJoins) {
         newGroup += '<option value="' + key + '"';
@@ -89,48 +143,30 @@ function addGroup(firstTerm, firstField, join)
             newGroup += ' selected="selected"';
         }
         newGroup += '>' + searchJoins[key] + '</option>';
-    };
-    newGroup += '</select>';
-    newGroup += '</div>';
-
-    groupSearches[nextGroupNumber] = 0;
-    
-    // Label
-    group = nextGroupNumber;    
-    term = firstTerm;
-    field = firstField;
-    
-    newGroup += '<div class="label"><label ';
-    newGroup += 'class="hide"';
-    newGroup += ' for="search_lookfor' + group + '_' + groupSearches[group] + '">' + searchLabel + ':</label>&nbsp;</div>';
-
-    // Terms
-    newGroup += '<div class="terms"><input type="text" id="search_lookfor' + group + '_' + groupSearches[group] + '" name="lookfor' + group + '[]" size="50" value="' + jsEntityEncode(term) + '"/></div>';
-
-    // Field
-    newGroup += '<div class="field"><label for="search_type' + group + '_' + groupSearches[group] + '">' + searchFieldLabel + '</label> ';
-    newGroup += '<select id="search_type' + group + '_' + groupSearches[group] + '" name="type' + group + '[]">';
-    for (var key in searchFields) {
-    	newGroup += '<option value="' + key + '"';
-        if (key == field) {
-        	newGroup += ' selected="selected"';
-        }
-        newGroup += ">" + searchFields[key] + "</option>";
     }
     newGroup += '</select>';
     newGroup += '</div>';
 
-    // Handle floating nonsense
-    newGroup += '<span class="clearer"></span>';
-    
-    newGroup += '</div>'; 
-    
+    // Delete link
+    newGroup += '<a href="#" class="delete" id="delete_link_' + nextGroupNumber + '" onclick="deleteGroupJS(this); return false;">' + deleteSearchGroupString + '</a>';
     newGroup += '</div>';
+
+    // Holder for all the search fields
+    newGroup += '<div id="group' + nextGroupNumber + 'SearchHolder" class="groupSearchHolder"></div>';
+
+    // Add search term link
+    newGroup += '<div class="addSearch"><a href="#" class="add" id="add_search_link_' + nextGroupNumber + '" onclick="addSearchJS(this); return false;">' + addSearchString + '</a></div>';
+
     newGroup += '</div>';
+
+    // Set to 0 so adding searches knows
+    //   which one is first.
+    groupSearches[nextGroupNumber] = 0;
 
     // Add the new group into the page
     $("#searchHolder").append(newGroup);
-
+    // Add the first search field
+    addSearch(nextGroupNumber, firstTerm, firstField);
     // Keep the page in order
     reSortGroups();
 
