@@ -26,19 +26,19 @@
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     http://vufind.org
  */
-
 namespace VuFindSearch\Backend\EDS\Response;
-
 use VuFindSearch\Response\AbstractRecordCollection;
+
 /**
  * EDS API record collection.
+ *
  * @category VuFind2
  * @package  Search
  * @author   Michelle Milton <mmilton@epnet.com>
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
  * @link     http://vufind.org
  */
- 
+
 class RecordCollection extends AbstractRecordCollection
 {
     /**
@@ -68,13 +68,14 @@ class RecordCollection extends AbstractRecordCollection
      */
     public function getTotal()
     {
-    	$totalHits = 0;
-        if( isset($this->response['SearchResult']) &&
-        	isset($this->response['SearchResult']['Statistics']) &&
-        	isset($this->response['SearchResult']['Statistics']['TotalHits'])){
-	        	$totalHits = $this->response['SearchResult']['Statistics']['TotalHits'];
-	    }
-        return $totalHits;	
+        $totalHits = 0;
+        if (isset($this->response['SearchResult'])
+            && isset($this->response['SearchResult']['Statistics'])
+            && isset($this->response['SearchResult']['Statistics']['TotalHits'])
+        ) {
+            $totalHits = $this->response['SearchResult']['Statistics']['TotalHits'];
+        }
+        return $totalHits;
     }
 
     /**
@@ -84,10 +85,11 @@ class RecordCollection extends AbstractRecordCollection
      */
     public function getRawFacets()
     {
-        return isset($this->response['SearchResult']) && isset($this->response['SearchResult']['AvailableFacets'])
+        return isset($this->response['SearchResult'])
+            && isset($this->response['SearchResult']['AvailableFacets'])
             ? $this->response['SearchResult']['AvailableFacets'] : array();
     }
-    
+
     /**
      * Return available facet information.
      *
@@ -95,31 +97,30 @@ class RecordCollection extends AbstractRecordCollection
      */
     public function getFacets()
     {
-    	$vufindFacetList = array();
-    	$facets = isset($this->response['SearchResult']) && isset($this->response['SearchResult']['AvailableFacets'])
-    						? $this->response['SearchResult']['AvailableFacets'] : array();
-    	foreach($facets as $facet)
-    	{
-    		$vufindFacet['displayName'] = $facet['Id'];
-    		$vufindFacet['displayText'] = $facet['Label'];
-    		$vuFindFacet['fieldName'] = $facet['Id'];
-    		$values = array();
-			foreach($facet['AvailableFacetValues'] as $availableFacetValue)
-			{
-				$values[] = array('value' => $availableFacetValue['Value'],
-								'count' => $availableFacetValue['Count'],
-								'displayText' => $availableFacetValue['Value']
-								
-				);
-				
-			}
-			$vufindFacet['counts'] = $values;
-			$vufindFacetList[$facet['Id']] = $vufindFacet;
-    	}
-    	return $vufindFacetList;
+        $vufindFacetList = array();
+        $facets = isset($this->response['SearchResult'])
+            && isset($this->response['SearchResult']['AvailableFacets'])
+            ? $this->response['SearchResult']['AvailableFacets'] : array();
+        foreach ($facets as $facet) {
+            $vufindFacet['displayName'] = $facet['Id'];
+            $vufindFacet['displayText'] = $facet['Label'];
+            $vuFindFacet['fieldName'] = $facet['Id'];
+            $values = array();
+            foreach ($facet['AvailableFacetValues'] as $availableFacetValue) {
+                $values[] = array(
+                    'value' => $availableFacetValue['Value'],
+                    'count' => $availableFacetValue['Count'],
+                    'displayText' => $availableFacetValue['Value']
+                );
+
+            }
+            $vufindFacet['counts'] = $values;
+            $vufindFacetList[$facet['Id']] = $vufindFacet;
+        }
+        return $vufindFacetList;
     }
-    
-    
+
+
 
     /**
      * Return offset in the total search result set.
@@ -128,13 +129,19 @@ class RecordCollection extends AbstractRecordCollection
      */
     public function getOffset()
     {
-    	if(isset($this->response['SearchRequestGet']) && !empty($this->response['SearchRequestGet']['QueryString'])){
-    		$qsParameters = explode('&',$this->response['SearchRequestGet']['QueryString']);
-    		$page = empty($qsParameters['pagenumber']) ? 0 : $qsParameters['pagenumber'];
-    		$resultsPerPage = empty($qsParameters['resultsperpage']) ? 0 : $qsParameters['resultsperpage'];
-			return $page * $resultsPerPage;
-    	}
-    	return 0;
+        if (isset($this->response['SearchRequestGet'])
+            && !empty($this->response['SearchRequestGet']['QueryString'])
+        ) {
+            $qsParameters = explode(
+                '&', $this->response['SearchRequestGet']['QueryString']
+            );
+            $page = empty($qsParameters['pagenumber'])
+                ? 0 : $qsParameters['pagenumber'];
+            $resultsPerPage = empty($qsParameters['resultsperpage'])
+                ? 0 : $qsParameters['resultsperpage'];
+            return $page * $resultsPerPage;
+        }
+        return 0;
     }
 
 }

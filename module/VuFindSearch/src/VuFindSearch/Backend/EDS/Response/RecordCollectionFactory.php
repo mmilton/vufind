@@ -33,6 +33,7 @@ use VuFindSearch\Backend\EDS\Response\RecordCollection;
 
 /**
  * Factory for record collection.
+ *
  * @category VuFind2
  * @package  Search
  * @author   Michelle Milton <mmilton@epnet.com>
@@ -83,29 +84,31 @@ class RecordCollectionFactory implements RecordCollectionFactoryInterface
      */
     public function factory($response)
     {
-    	if (!is_array($response)) {
+        if (!is_array($response)) {
             throw new InvalidArgumentException(
                 sprintf(
                     'Unexpected type of value: Expected array, got %s',
                     gettype($response)
                 )
             );
-         }
-         $collection = new $this->collectionClass($response);
-         //obtain path to records
-       	$records = array();
-       	if(isset($response['SearchResult']) &&
-       	  isset($response['SearchResult']['Data']) &&
-       	  isset($response['SearchResult']['Data']['Records']) ){ //Format of the search response
-       		$records = $response['SearchResult']['Data']['Records'];
-        }else if(isset($response['Records'])){ //Format of the retrieve response
-        	$records = $response['Records'];
+        }
+        $collection = new $this->collectionClass($response);
+        //obtain path to records
+        $records = array();
+        if (isset($response['SearchResult'])
+            && isset($response['SearchResult']['Data'])
+            && isset($response['SearchResult']['Data']['Records'])
+        ) {
+            // Format of the search response
+            $records = $response['SearchResult']['Data']['Records'];
+        } else if (isset($response['Records'])) { // Format of the retrieve response
+            $records = $response['Records'];
         }
 
         foreach ($records as $record) {
             $collection->add(call_user_func($this->recordFactory, $record));
         }
-    	return $collection;
+        return $collection;
     }
 
 }

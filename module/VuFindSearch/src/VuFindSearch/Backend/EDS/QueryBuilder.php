@@ -32,8 +32,10 @@ use VuFindSearch\Query\AbstractQuery;
 use VuFindSearch\Query\QueryGroup;
 use VuFindSearch\Query\Query;
 use VuFindSearch\ParamBag;
+
 /**
- * 
+ * EDS API Querybuilder
+ *
  * @category VuFind2
  * @package  Search
  * @author   Michelle Milton <mmilton@epnet.com>
@@ -43,98 +45,102 @@ use VuFindSearch\ParamBag;
 
 class QueryBuilder
 {
-	
-	/**
-	 * Constructor
-	 */
-	public function __construct()
-	{
-	}
-	
-	/**
-	 * Construct EdsApi search parameters based on a user query and params.
-	 *
-	 * @param AbstractQuery $query User query
-	 *
-	 * @return ParamBag
-	 */
-	public function build(AbstractQuery $query)
-	{
-		// Build base query
-		$queries = $this->abstractQueryToArray($query);
-		
-		// Send back results
-		$params = new ParamBag(array('query' => $queries));
-		return $params;
-	}
-	
-	/**
-	 * Convert a single Query object to an eds api query array
-	 *
-	 * @param Query $query Query to convert
-	 *
-	 * @return string
-	 */
-	protected function queryToEdsQuery(Query $query, $operator = 'AND')
-	{
-		$expression = str_replace('"', '', $query->getString());
-		$expression = SearchRequestModel::escapeSpecialCharacters($expression);
-		$fieldCode = ($query->getHandler() == 'AllFields')? '' : $query->getHandler();  //fieldcode
-		if(!empty($fieldCode))
-			$expression = $fieldCode.':'.$expression;
-		if(!empty($operator))
-			$expression = $operator.','.$expression;
-		return $expression;
-	}
-	
-	
-	/// Internal API
-	
-	/**
-	 * Convert an AbstractQuery object to a query string.
-	 *
-	 * @param AbstractQuery $query Query to convert
-	 *
-	 * @return array
-	 */
-	protected function abstractQueryToArray(AbstractQuery $query)
-	{
-		if ($query instanceof Query) {
-			return array('1'=>$this->queryToEdsQuery($query));
-		} else {
-			return $this->queryGroupToArray($query);
-		}
-	}
-	
-	/**
-	 * Convert a QueryGroup object to a query string.
-	 *
-	 * @param QueryGroup $query QueryGroup to convert
-	 *
-	 * @return array
-	 */
-	protected function queryGroupToArray(QueryGroup $query)
-	{
-		$groups =  array();
-		foreach ($query->getQueries() as $params) {
-			// Advanced Search
-			if ($params instanceof QueryGroup) {
-				$thisGroup = array();
-				// Process each search group
-				foreach ($params->getQueries() as $q) {
-					// Build this group individually as a basic search
-					$op = $q->getOperator();
-					if($params->isNegated())
-						$op = 'NOT';
-					$grp  = $this->queryToEdsQuery($q, $op);
-					$groups[] = $grp;
-				}
-			} else {
-				// Basic Search
-				$groups[] = $this->queryToEdsQuery($params);
-			}
-		}
-		return $groups;
-		
-	}
+    /**
+     * Constructor
+     */
+    public function __construct()
+    {
+    }
+
+    /**
+     * Construct EdsApi search parameters based on a user query and params.
+     *
+     * @param AbstractQuery $query User query
+     *
+     * @return ParamBag
+     */
+    public function build(AbstractQuery $query)
+    {
+        // Build base query
+        $queries = $this->abstractQueryToArray($query);
+
+        // Send back results
+        $params = new ParamBag(array('query' => $queries));
+        return $params;
+    }
+
+    /**
+     * Convert a single Query object to an eds api query array
+     *
+     * @param Query  $query    Query to convert
+     * @param string $operator Operator to apply
+     *
+     * @return string
+     */
+    protected function queryToEdsQuery(Query $query, $operator = 'AND')
+    {
+        $expression = str_replace('"', '', $query->getString());
+        $expression = SearchRequestModel::escapeSpecialCharacters($expression);
+        $fieldCode = ($query->getHandler() == 'AllFields')
+            ? '' : $query->getHandler();  //fieldcode
+        if (!empty($fieldCode)) {
+            $expression = $fieldCode.':'.$expression;
+        }
+        if (!empty($operator)) {
+            $expression = $operator.','.$expression;
+        }
+        return $expression;
+    }
+
+
+    /// Internal API
+
+    /**
+     * Convert an AbstractQuery object to a query string.
+     *
+     * @param AbstractQuery $query Query to convert
+     *
+     * @return array
+     */
+    protected function abstractQueryToArray(AbstractQuery $query)
+    {
+        if ($query instanceof Query) {
+            return array('1'=>$this->queryToEdsQuery($query));
+        } else {
+            return $this->queryGroupToArray($query);
+        }
+    }
+
+    /**
+     * Convert a QueryGroup object to a query string.
+     *
+     * @param QueryGroup $query QueryGroup to convert
+     *
+     * @return array
+     */
+    protected function queryGroupToArray(QueryGroup $query)
+    {
+        $groups =  array();
+        foreach ($query->getQueries() as $params) {
+            // Advanced Search
+            if ($params instanceof QueryGroup) {
+                $thisGroup = array();
+                // Process each search group
+                foreach ($params->getQueries() as $q) {
+                    // Build this group individually as a basic search
+                    $op = $q->getOperator();
+                    if ($params->isNegated()) {
+                        $op = 'NOT';
+                    }
+                    $grp  = $this->queryToEdsQuery($q, $op);
+                    $groups[] = $grp;
+                }
+            } else {
+                // Basic Search
+                $groups[] = $this->queryToEdsQuery($params);
+            }
+        }
+        return $groups;
+
+    }
 }

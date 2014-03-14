@@ -24,93 +24,121 @@
  * @package  EBSCO
  * @author   Michelle Milton <mmilton@epnet.com>
  * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
+ * @link     http://vufind.org
  */
 
+/**
+ * EBSCO EdsApi Exception class
+ *
+ * @category EBSCOIndustries
+ * @package  EBSCO
+ * @author   Michelle Milton <mmilton@epnet.com>
+ * @license  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
+ * @link     http://vufind.org
+ */
 class EbscoEdsApiException extends Exception
-{	
-	
-	public function __construct($apiErrorMessage)
-	{
-		if(is_array($apiErrorMessage)){
- 			$this->setApiError($apiErrorMessage);
-			parent::__construct();
-		}else{
-			parent::__construct($apiErrorMessage);
-		}
-		
-	}
-	/**
-	 * Error message details returned from the API
-	 * @var array()
-	 */
-	protected $apiErrorDetails = array();
-	
-	
-	/**
-	 * Set the api error details into an array
-	 * @param array $message
-	 */
-	protected function setApiError($message)
-	{
-		//AuthErrorMessages
-		if (isset($message['ErrorCode'])){
-			$this->apiErrorDetails['ErrorCode'] = $message['ErrorCode'];
-			$this->apiErrorDetails['Description'] = $message['Reason'] ;
-			$this->apiErrorDetails['DetailedDescription'] = $message['AdditionalDetail'];
-		}
-		
-		//EDSAPI error messages
-		if(isset($message['ErrorNumber'])){
-			$this->apiErrorDetails['ErrorCode'] = $message['ErrorNumber'];
-			$this->apiErrorDetails['Description'] = $message['ErrorDescription'];
-			$this->apiErrorDetails['DetailedDescription'] = $message['DetailedErrorDescription'];
-			
-		}
-	}
-	
-	/**
-	 * Get the Api Error message details.
-	 * @return array()
-	 */
-	public function getApiError()
-	{
-		return $this->apiErrorDetails;
-	}
-	
-	/**
-	 * Is this a know api error
-	 * @return bool
-	 */
-	public function isApiError()
-	{
-		return isset($this->apiErrorDetails);
-	}
-	
-	/**
-	 * Known api error code
-	 * @return array()
-	 */
+{
+    /**
+     * Error message details returned from the API
+     *
+     * @var array
+     */
+    protected $apiErrorDetails = array();
+
+    /**
+     * Constructor
+     *
+     * @param array $apiErrorMessage Error message
+     */
+    public function __construct($apiErrorMessage)
+    {
+        if (is_array($apiErrorMessage)) {
+            $this->setApiError($apiErrorMessage);
+            parent::__construct();
+        } else {
+            parent::__construct($apiErrorMessage);
+        }
+
+    }
+
+    /**
+     * Set the api error details into an array
+     *
+     * @param array $message Error message
+     *
+     * @return void
+     */
+    protected function setApiError($message)
+    {
+        //AuthErrorMessages
+        if (isset($message['ErrorCode'])) {
+            $this->apiErrorDetails['ErrorCode'] = $message['ErrorCode'];
+            $this->apiErrorDetails['Description'] = $message['Reason'] ;
+            $this->apiErrorDetails['DetailedDescription']
+                = $message['AdditionalDetail'];
+        }
+
+        //EDSAPI error messages
+        if (isset($message['ErrorNumber'])) {
+            $this->apiErrorDetails['ErrorCode'] = $message['ErrorNumber'];
+            $this->apiErrorDetails['Description'] = $message['ErrorDescription'];
+            $this->apiErrorDetails['DetailedDescription']
+                = $message['DetailedErrorDescription'];
+
+        }
+    }
+
+    /**
+     * Get the Api Error message details.
+     *
+     * @return array
+     */
+    public function getApiError()
+    {
+        return $this->apiErrorDetails;
+    }
+
+    /**
+     * Is this a know api error
+     *
+     * @return bool
+     */
+    public function isApiError()
+    {
+        return isset($this->apiErrorDetails);
+    }
+
+    /**
+     * Known api error code
+     *
+     * @return array
+     */
     public function getApiErrorCode()
     {
-    	return isset($this->apiErrorDetails) ? $this->apiErrorDetails['ErrorCode'] : '';
+        return isset($this->apiErrorDetails)
+            ? $this->apiErrorDetails['ErrorCode'] : '';
     }
-	
+
     /**
      * Known api error description
+     *
      * @return string
      */
     public function getApiErrorDescription()
     {
-        return isset($this->apiErrorDetails) ? $this->apiErrorDetails['Description'] : '';
+        return isset($this->apiErrorDetails)
+            ? $this->apiErrorDetails['Description'] : '';
     }
-    
-    
+
+
     /**
      * Known api detailed error description
+     *
      * @return string
      */
     public function getApiDetailedErrorDescription()
     {
-        return (isset($this->apiErrorDetails)) ? $this->apiErrorDetails['DetailedDescription'] : '';
-    }	
+        return (isset($this->apiErrorDetails))
+            ? $this->apiErrorDetails['DetailedDescription'] : '';
+    }
 }
