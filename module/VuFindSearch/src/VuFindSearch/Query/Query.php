@@ -56,18 +56,17 @@ class Query extends AbstractQuery
 
     /**
      * Operator to apply to query string (null if not applicable)
-     * 
+     *
      * @var string
      */
     protected $operator;
-    
+
     /**
      * Constructor.
      *
-     * @param string $string  Search string
-     * @param string $handler Name of search handler
-     *
-     * @return void
+     * @param string $string   Search string
+     * @param string $handler  Name of search handler
+     * @param string $operator Operator to apply to query string (null if n/a)
      */
     public function __construct($string = null, $handler = null, $operator = null)
     {
@@ -119,25 +118,27 @@ class Query extends AbstractQuery
     {
         $this->queryHandler = $handler;
     }
-    
+
     /**
-     * Return operator (null if n/a)
-     * 
+     * Return operator (null if n/a).
+     *
      * @return string
      */
     public function getOperator()
     {
-    	return $this->operator;
+        return $this->operator;
     }
-    
+
     /**
-     * Set Operator (null if n/a)
-     * 
-     * @param string $operator
+     * Set operator (null if n/a).
+     *
+     * @param string $operator Operator
+     *
+     * @return string
      */
     public function setOperator($operator)
     {
-    	$this->operator = $operator;
+        $this->operator = $operator;
     }
 
     /**

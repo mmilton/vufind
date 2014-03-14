@@ -151,8 +151,8 @@ class UrlQueryHelper
                                 }
                                 $params['lookfor'.$i][] = $inner->getString();
                                 $params['type' . $i][] = $inner->getHandler();
-                                if(null !== ($op = $inner->getOperator())){
-                                	$params['op' . $i][] = $op;
+                                if (null !== ($op = $inner->getOperator())) {
+                                    $params['op' . $i][] = $op;
                                 }
                             }
                         } else {

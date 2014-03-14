@@ -186,11 +186,11 @@ abstract class QueryAdapter
                     $typeArr = $request->get('type' . $groupCount);
                     $handler = (isset($typeArr[$i]) && !empty($typeArr[$i]))
                         ? $typeArr[$i] : $defaultHandler;
-                    
+
                     $opArr = $request->get('op' . $groupCount);
                     $operator = (isset($opArr[$i]) && !empty($opArr[$i]))
                         ? $opArr[$i] : null;
-                    
+
                     // Add term to this group
                     $boolArr = $request->get('bool' . $groupCount);
                     $lastBool = isset($boolArr[0]) ? $boolArr[0] : null;
@@ -245,12 +245,15 @@ abstract class QueryAdapter
             } elseif ($current instanceof QueryGroup) {
                 throw new \Exception('Not sure how to minify this query!');
             } else {
-                $retVal[] = array(
+                $currentArr = array(
                     'f' => $current->getHandler(),
                     'l' => $current->getString(),
-                	'o' => $current->getOperator(),
                     'b' => $operator
                 );
+                if (null !== ($op = $current->getOperator())) {
+                    $currentArr['o'] = $op;
+                }
+                $retVal[] = $currentArr;
             }
         }
         return $retVal;

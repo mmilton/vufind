@@ -504,7 +504,7 @@ class MyResearchController extends AbstractBase
         $source = $this->params()->fromPost(
             'source', $this->params()->fromQuery('source', 'VuFind')
         );
-        $driver = $this->getRecordLoader()->load($id, $source);
+        $driver = $this->getRecordLoader()->load($id, $source, true);
         $listID = $this->params()->fromPost(
             'list_id', $this->params()->fromQuery('list_id', null)
         );
@@ -789,21 +789,9 @@ class MyResearchController extends AbstractBase
      */
     protected function getDriverForILSRecord($current)
     {
-        try {
-            if (!isset($current['id'])) {
-                throw new RecordMissingException();
-            }
-            $record = $this->getServiceLocator()->get('VuFind\RecordLoader')
-                ->load($current['id']);
-        } catch (RecordMissingException $e) {
-            $factory = $this->getServiceLocator()
-                ->get('VuFind\RecordDriverPluginManager');
-            $record = $factory->get('Missing');
-            $record->setRawData(
-                array('id' => isset($current['id']) ? $current['id'] : null)
-            );
-            $record->setSourceIdentifier('Solr');
-        }
+        $id = isset($current['id']) ? $current['id'] : null;
+        $record = $this->getServiceLocator()->get('VuFind\RecordLoader')
+            ->load($id, 'VuFind', true);
         $record->setExtraDetail('ils_details', $current);
         return $record;
     }
@@ -926,6 +914,62 @@ class MyResearchController extends AbstractBase
             // Do nothing; if we're unable to load information about pickup
             // locations, they are not supported and we should ignore them.
         }
+        $view->recordList = $recordList;
+        return $view;
+    }
+
+    /**
+     * Send list of ill requests to view
+     *
+     * @return mixed
+     */
+    public function illRequestsAction()
+    {
+        // Stop now if the user does not have valid catalog credentials available:
+        if (!is_array($patron = $this->catalogLogin())) {
+            return $patron;
+        }
+
+        // Connect to the ILS:
+        $catalog = $this->getILS();
+
+        // Process cancel requests if necessary:
+        $cancelStatus = $catalog->checkFunction('cancelILLRequests');
+        $view = $this->createViewModel();
+        $view->cancelResults = $cancelStatus
+            ? $this->ILLRequests()->cancelILLRequests(
+                $catalog, $patron
+            )
+            : array();
+        // If we need to confirm
+        if (!is_array($view->cancelResults)) {
+            return $view->cancelResults;
+        }
+
+        // By default, assume we will not need to display a cancel form:
+        $view->cancelForm = false;
+
+        // Get request details:
+        $result = $catalog->getMyILLRequests($patron);
+        $recordList = array();
+        $this->ILLRequests()->resetValidation();
+        foreach ($result as $current) {
+            // Add cancel details if appropriate:
+            $current = $this->ILLRequests()->addCancelDetails(
+                $catalog, $current, $cancelStatus, $patron
+            );
+            if ($cancelStatus 
+                && $cancelStatus['function'] != "getCancelILLRequestLink"
+                && isset($current['cancel_details'])
+            ) {
+                // Enable cancel form if necessary:
+                $view->cancelForm = true;
+            }
+
+            // Build record driver:
+            $recordList[] = $this->getDriverForILSRecord($current);
+        }
+
         $view->recordList = $recordList;
         return $view;
     }
