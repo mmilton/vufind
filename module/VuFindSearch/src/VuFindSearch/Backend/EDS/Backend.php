@@ -216,7 +216,7 @@ class Backend implements BackendInterface
             "Authentication Token: $authenticationToken, SessionToken: $sessionToken"
         );
 
-        //Check to see if there is a parameter to only process this call as a setup
+        //check to see if there is a parameter to only process this call as a setup
         if (null != $params->get('setuponly') && true == $params->get('setuponly')) {
             return false;
         }
@@ -228,7 +228,6 @@ class Backend implements BackendInterface
             "Query: $queryString, Limit: $limit, Offset: $offset, "
             . "Params: $paramsString"
         );
-
 
         $baseParams = $this->getQueryBuilder()->build($query);
         $paramsString = implode('&', $baseParams->request());
@@ -279,8 +278,6 @@ class Backend implements BackendInterface
             } else {
                 $response = array();
             }
-            //else
-            //  throw $e;
 
         } catch(Exception $e) {
             $this->debugPrint("Exception found: " . $e->getMessage());
@@ -290,7 +287,6 @@ class Backend implements BackendInterface
                 $e->getCode(),
                 $e
             );
-
         }
         $collection = $this->createRecordCollection($response);
         $this->injectSourceIdentifier($collection);
@@ -316,10 +312,6 @@ class Backend implements BackendInterface
                 $this->profile = $overrideProfile;
             }
             $sessionToken = $this->getSessionToken();
-
-            // not sure how $an and dbid will be coming through. could have the id be
-            // thequery string to identify the record retrieval
-            // or maybe $id = [dbid],[an]
             $seperator = ',';
             $pos = strpos($id, $seperator);
             if ($pos === false) {
@@ -329,17 +321,19 @@ class Backend implements BackendInterface
             }
             $dbId = substr($id, 0, $pos);
             $an  = substr($id, $pos+1);
-            $highlightTerms = '';//$params['highlight'];
+            $highlightTerms = null;
+            if(null != $params)
+            	$highlightTerms = $params->get('highlightterms');
             $response = $this->client->retrieve(
-                $an, $dbId, $highlightTerms, $authenticationToken, $sessionToken
+                $an, $dbId, $authenticationToken, $sessionToken, $highlightTerms
             );
         } catch (\EbscoEdsApiException $e) {
             if ($e->getApiErrorCode == 104) {
                 try {
                     $authenticationToken = $this->getAuthenticationToken(true);
                     $response = $this->client->retrieve(
-                        $an, $dbId, $highlightTerms, $authenticationToken,
-                        $sessionToken
+                        $an, $dbId,  $authenticationToken,
+                        $sessionToken, $highlightTerms
                     );
                 } catch(Exception $e) {
                     throw new BackendException(
@@ -347,7 +341,6 @@ class Backend implements BackendInterface
                         $e->getCode(),
                         $e
                     );
-
                 }
             } else {
                 throw $e;
@@ -368,9 +361,6 @@ class Backend implements BackendInterface
     protected function paramBagToEBSCOSearchModel(ParamBag $params)
     {
         $params= $params->getArrayCopy();
-            // Convert the options:
-        //$paramContents = explode('&', $params);
-        //$this->debugPrint("ParamBag Contents: $paramContents");
         $options = array();
         // Most parameters need to be flattened from array format, but a few
         // should remain as arrays:
@@ -525,9 +515,9 @@ class Backend implements BackendInterface
                 . "$currentToken, expiration time: $expirationTime"
             );
 
-            // check to see if the token expiration time is greater than the current
-            // time.  if the token is expired or within 5 minutes of expiring,
-            // generate a new one
+            // Check to see if the token expiration time is greater than the current
+            // time.  If the token is expired or within 5 minutes of expiring,
+            // generate a new one.
             if (!empty($currentToken) && (time() <= ($expirationTime - (60*5)))) {
                 return $currentToken;
             }
