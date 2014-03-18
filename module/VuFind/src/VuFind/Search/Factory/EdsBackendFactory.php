@@ -130,19 +130,14 @@ class EdsBackendFactory implements FactoryInterface
      */
     protected function createConnector()
     {
-        // TODO: set up options:
         $options = array();
-
-        //TODO: DETERMINE WHAT ID AND KEY ARE 
         $id = 'EDS';
         $key = 'EDS';
         // Build HTTP client:
         $client = $this->serviceLocator->get('VuFind\Http')->createClient();
         $timeout = isset($this->edsConfig->General->timeout)
             ? $this->edsConfig->General->timeout : 30;
-        $client->setOptions(array('timeout' => $timeout));
-
-        
+        $client->setOptions(array('timeout' => $timeout));        
         $connector = new Connector($id, $key, $options, $client);
         $connector->setLogger($this->logger);
         return $connector;

@@ -372,7 +372,6 @@ class SearchRequestModel
      */
     public function addAction($action)
     {
-        // TODO: will VuFind be using the ordinal?? or even using the actions??
         $this->actions[] = $action;
     }
 

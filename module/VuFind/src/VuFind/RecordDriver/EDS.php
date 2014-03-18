@@ -51,8 +51,6 @@ class EDS extends SolrDefault
      */
     public function getUniqueID()
     {
-    	//TODO: SET THIS!
-    	//It needs to be the AN and DB
     	$dbid = $this->fields['Header']['DbId'];
     	$an = $this->fields['Header']['An'];
         return $dbid.','.$an;
