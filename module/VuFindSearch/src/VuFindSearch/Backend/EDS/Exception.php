@@ -1,4 +1,3 @@
-<element>
 <?php
 /**
  * EBSCO EdsApi Exception class
