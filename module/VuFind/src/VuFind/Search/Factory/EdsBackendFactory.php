@@ -76,13 +76,13 @@ class EdsBackendFactory implements FactoryInterface
      * @var \Zend\Config\Config
      */
     protected $edsConfig;
-    
+
     /**
-     * EDS Account data 
+     * EDS Account data
      * @var array
      */
-	protected $accountData;    
-    
+    protected $accountData;
+
 
     /**
      * Create the backend.
@@ -116,7 +116,9 @@ class EdsBackendFactory implements FactoryInterface
      */
     protected function createBackend(Connector $connector)
     {
-    	$backend = new Backend($connector, $this->createRecordCollectionFactory(), $this->accountData);
+        $backend = new Backend(
+            $connector, $this->createRecordCollectionFactory(), $this->accountData
+        );
         $backend->setServiceLocator($this->serviceLocator);
         $backend->setLogger($this->logger);
         $backend->setQueryBuilder($this->createQueryBuilder());
@@ -137,7 +139,7 @@ class EdsBackendFactory implements FactoryInterface
         $client = $this->serviceLocator->get('VuFind\Http')->createClient();
         $timeout = isset($this->edsConfig->General->timeout)
             ? $this->edsConfig->General->timeout : 30;
-        $client->setOptions(array('timeout' => $timeout));        
+        $client->setOptions(array('timeout' => $timeout));
         $connector = new Connector($id, $key, $options, $client);
         $connector->setLogger($this->logger);
         return $connector;
@@ -169,32 +171,32 @@ class EdsBackendFactory implements FactoryInterface
         };
         return new RecordCollectionFactory($callback);
     }
-    
-    
+
+
     /**
-     * Set the default account data for use with the EDS API 
-     * 
+     * Set the default account data for use with the EDS API
+     *
      * @return array Default account settings
      */
     protected function getAccountData()
     {
-    	$accountData = array();
-    	if (isset($this->edsConfig->EBSCO_Account->user_name)) {
-    		$accountData['username'] = $this->edsConfig->EBSCO_Account->user_name;
-    	}
-    	if (isset($this->edsConfig->EBSCO_Account->password)) {
-    		$accountData['password'] = $this->edsConfig->EBSCO_Account->password;
-    	}
-    	if (isset($this->edsConfig->EBSCO_Account->ip_auth)) {
-    		$accountData['ipauth'] = $this->edsConfig->EBSCO_Account->ip_auth;
-    	}
-    	if (isset($this->edsConfig->EBSCO_Account->profile)) {
-    		$accountData['profile'] = $this->edsConfig->EBSCO_Account->profile;
-    	}
-    	if(isset($this->edsConfig->EBSCO_Account->organization_id)){
-    		$acountData['orgid'] = $this->edsConfig->EBSCO_Account->organization_id;
-    	}
-		return $accountData;    	
-    	
+        $accountData = array();
+        if (isset($this->edsConfig->EBSCO_Account->user_name)) {
+            $accountData['username'] = $this->edsConfig->EBSCO_Account->user_name;
+        }
+        if (isset($this->edsConfig->EBSCO_Account->password)) {
+            $accountData['password'] = $this->edsConfig->EBSCO_Account->password;
+        }
+        if (isset($this->edsConfig->EBSCO_Account->ip_auth)) {
+            $accountData['ipauth'] = $this->edsConfig->EBSCO_Account->ip_auth;
+        }
+        if (isset($this->edsConfig->EBSCO_Account->profile)) {
+            $accountData['profile'] = $this->edsConfig->EBSCO_Account->profile;
+        }
+        if (isset($this->edsConfig->EBSCO_Account->organization_id)) {
+            $acountData['orgid'] = $this->edsConfig->EBSCO_Account->organization_id;
+        }
+        return $accountData;
+
     }
 }
