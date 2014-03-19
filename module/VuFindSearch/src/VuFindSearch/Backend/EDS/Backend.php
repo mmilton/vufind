@@ -322,8 +322,9 @@ class Backend implements BackendInterface
             $dbId = substr($id, 0, $pos);
             $an  = substr($id, $pos+1);
             $highlightTerms = null;
-            if(null != $params)
-            	$highlightTerms = $params->get('highlightterms');
+            if (null != $params) {
+                $highlightTerms = $params->get('highlightterms');
+            }
             $response = $this->client->retrieve(
                 $an, $dbId, $authenticationToken, $sessionToken, $highlightTerms
             );

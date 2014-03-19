@@ -174,11 +174,13 @@ abstract class EdsApi_REST_Base
      * @param string $authenticationToken Authentication token
      * @param string $sessionToken        Session token
      * @param string $highlightTerms      Comma separated list of terms to highlight
-     *                                    in the retrieved record responses     
+     * in the retrieved record responses
+     *
      * @return array    The requested record
      */
-    public function retrieve($an, $dbId, $authenticationToken, $sessionToken, $highlightTerms = null)
-    {
+    public function retrieve($an, $dbId, $authenticationToken, $sessionToken,
+        $highlightTerms = null
+    ) {
         $this->debugPrint(
             "Get Record. an: $an, dbid: $dbId, $highlightTerms: $highlightTerms"
         );
