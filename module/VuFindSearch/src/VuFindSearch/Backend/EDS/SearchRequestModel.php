@@ -150,20 +150,20 @@ class SearchRequestModel
             case 'filters':
                 $cnt = 1;
                 foreach ($values as $filter) {
-                    if (substr($filter, 0, 6) == 'LIMIT|') {
-                        $this->addLimiter(substr($filter, 6));
-                    } else if (substr($filter, 0, 7) == 'EXPAND:') {
-                        $this->addExpander(substr($filter, 7));
-                    } else if (substr($filter, 0, 11) == 'SEARCHMODE:') {
-                        $this->searchMode = substr($filter, 11);
-                    } else if (substr($filter, 0, 15) == 'PublicationDate') {
+                    if (mb_substr($filter, 0, 6) == 'LIMIT|') {
+                        $this->addLimiter(mb_substr($filter, 6));
+                    } else if (mb_substr($filter, 0, 7) == 'EXPAND:') {
+                        $this->addExpander(mb_substr($filter, 7));
+                    } else if (mb_substr($filter, 0, 11) == 'SEARCHMODE:') {
+                        $this->searchMode = mb_substr($filter, 11);
+                    } else if (mb_substr($filter, 0, 15) == 'PublicationDate') {
                         //PublicationDate:[xxxx TO xxxx]
-                        $dates = substr($filter, 17);
-                        $dates = substr($dates, 0, strlen($dates)-1);
+                        $dates = mb_substr($filter, 17);
+                        $dates = mb_substr($dates, 0, strlen($dates)-1);
                         $toPos = strpos($dates, 'TO');
                         if ($toPos) {
-                            $start = trim(substr($dates, 0, $toPos-1));
-                            $end = trim(substr($dates, $toPos+3));
+                            $start = trim(mb_substr($dates, 0, $toPos-1));
+                            $end = trim(mb_substr($dates, $toPos+3));
                         }
                         if ('*' == $start || null == $start) {
                             $start = '0000';
@@ -255,7 +255,7 @@ class SearchRequestModel
         }
 
         if ($this->endsWith($qs, '&')) {
-            $qs = substr($qs, 0, -1);
+            $qs = mb_substr($qs, 0, -1);
         }
         return $qs;
     }
@@ -333,7 +333,7 @@ class SearchRequestModel
         if (!isset($valueToCheck)) {
             return false;
         }
-        return substr($valueToCheck, -strlen($valueToCheckFor)) === $valueToCheckFor;
+        return mb_substr($valueToCheck, -strlen($valueToCheckFor)) === $valueToCheckFor;
     }
 
     /**
@@ -360,7 +360,7 @@ class SearchRequestModel
     public static function getIndexedParameterName($value)
     {
         //Indexed parameter names end with '-x'
-        return substr($value, 0, -2);
+        return mb_substr($value, 0, -2);
     }
 
     /**

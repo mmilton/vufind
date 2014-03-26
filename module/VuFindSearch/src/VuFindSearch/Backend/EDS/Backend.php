@@ -319,8 +319,8 @@ class Backend implements BackendInterface
                     'Retrieval id is not in the correct format.'
                 );
             }
-            $dbId = substr($id, 0, $pos);
-            $an  = substr($id, $pos+1);
+            $dbId = mb_substr($id, 0, $pos);
+            $an  = mb_substr($id, $pos+1);
             $highlightTerms = null;
             if (null != $params) {
                 $highlightTerms = $params->get('highlightterms');

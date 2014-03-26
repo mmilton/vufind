@@ -68,7 +68,7 @@ class EDS extends SolrDefault
             return '';
         }
         if (strlen($title > 20)) {
-            $title = substr($title, 0, 17).'...';
+            $title = mb_substr($title, 0, 17).'...';
         }
         return $title;
     }

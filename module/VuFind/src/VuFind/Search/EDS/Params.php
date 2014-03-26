@@ -222,8 +222,8 @@ class Params extends \VuFind\Search\Base\Params
             if (isset($limiter) &&!empty($limiter)) {
                 //split the id/value
                 $pos = strpos($limiter, ':');
-                $key =  substr($limiter, 0, $pos);
-                $value = substr($limiter, $pos + 1);
+                $key =  mb_substr($limiter, 0, $pos);
+                $value = mb_substr($limiter, $pos + 1);
                 $value = SearchRequestModel::escapeSpecialCharacters($value);
                 $edsLimiters[$key] = (!isset($edsLimiters[$key]))
                      ? $value : $edsLimiters[$key].','.$value;
@@ -333,11 +333,11 @@ class Params extends \VuFind\Search\Base\Params
     {
         //Also store Limiter/Search Mode IDs/Values in the config file
         $facetId = $field;
-        if (substr($field, 0, 6) == 'LIMIT|') {
-            $facetId = substr($field, 6);
+        if (mb_substr($field, 0, 6) == 'LIMIT|') {
+            $facetId = mb_substr($field, 6);
         }
-        if (substr($field, 0, 11) == 'SEARCHMODE|') {
-            $facetId = substr($field, 11);
+        if (mb_substr($field, 0, 11) == 'SEARCHMODE|') {
+            $facetId = mb_substr($field, 11);
         }
         return isset($this->facetConfig[$facetId])
             ? $this->facetConfig[$facetId] : $facetId;
