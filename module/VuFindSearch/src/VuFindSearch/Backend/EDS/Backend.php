@@ -312,15 +312,14 @@ class Backend implements BackendInterface
                 $this->profile = $overrideProfile;
             }
             $sessionToken = $this->getSessionToken();
-            $seperator = ',';
-            $pos = strpos($id, $seperator);
-            if ($pos === false) {
+            $parts = explode(',', $id, 2);
+            if (!isset($parts[1])) {
                 throw new BackendException(
                     'Retrieval id is not in the correct format.'
                 );
             }
-            $dbId = mb_substr($id, 0, $pos);
-            $an  = mb_substr($id, $pos+1);
+            $dbId = $parts[0];
+            $an  = $parts[1];
             $highlightTerms = null;
             if (null != $params) {
                 $highlightTerms = $params->get('highlightterms');

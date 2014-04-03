@@ -67,8 +67,8 @@ class EDS extends SolrDefault
         if (null == $title) {
             return '';
         }
-        if (strlen($title > 20)) {
-            $title = mb_substr($title, 0, 17).'...';
+        if (mb_strlen($title, 'UTF-8') > 20) {
+            $title = mb_substr($title, 0, 17, 'UTF-8').'...';
         }
         return $title;
     }
