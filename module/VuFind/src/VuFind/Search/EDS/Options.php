@@ -28,8 +28,6 @@
 namespace VuFind\Search\EDS;
 
 use VuFindSearch\ParamBag;
-use Zend\ServiceManager\ServiceLocatorAwareInterface,
-    Zend\ServiceManager\ServiceLocatorInterface;
 
 /**
  * EDS API Options
@@ -91,8 +89,6 @@ class Options extends \VuFind\Search\Base\Options
      * @var unknown
      */
     protected $includeFacets = 'y';
-
-    protected $serviceLocator;
 
     /**
      * Available Search Options from the API
