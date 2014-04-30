@@ -121,9 +121,11 @@ class Options extends \VuFind\Search\Base\Options
      * Constructor
      *
      * @param \VuFind\Config\PluginManager $configLoader Configuration loader
+     * @param array                        $apiInfo      API information
      */
-    public function __construct(\VuFind\Config\PluginManager $configLoader)
-    {
+    public function __construct(\VuFind\Config\PluginManager $configLoader,
+        $apiInfo = null
+    ) {
         $this->searchIni = 'EDS';
         $searchSettings = $configLoader->get($this->searchIni);
         parent::__construct($configLoader);
@@ -131,8 +133,7 @@ class Options extends \VuFind\Search\Base\Options
             'list|title' => 'title', 'list|brief' => 'brief',
             'list|detailed'=>'detailed'
         );
-        $container = new \Zend\Session\Container('EBSCO');
-        $this->apiInfo = $container->info;
+        $this->apiInfo = $apiInfo;
         $this->setOptionsFromApi($searchSettings);
         $this->setOptionsFromConfig($searchSettings);
     }

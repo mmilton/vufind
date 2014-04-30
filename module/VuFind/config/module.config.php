@@ -430,6 +430,9 @@ $config = array(
             ),
             'search_options' => array(
                 'abstract_factories' => array('VuFind\Search\Options\PluginFactory'),
+                'factories' => array(
+                    'eds' => 'VuFind\Search\Options\Factory::getEDS',
+                ),
             ),
             'search_params' => array(
                 'abstract_factories' => array('VuFind\Search\Params\PluginFactory'),
