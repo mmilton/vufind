@@ -51,7 +51,7 @@ class Factory
         $config = $sm->getServiceLocator()->get('VuFind\Config');
         $container = new \Zend\Session\Container('EBSCO');
         // No API info in session? Re-establish connection:
-        if (!isset($container->apiInfo)) {
+        if (!isset($container->info)) {
             $backend = $sm->getServiceLocator()->get('VuFind\Search\BackendManager')
                 ->get('EDS');
             $backend->getSessionToken();
