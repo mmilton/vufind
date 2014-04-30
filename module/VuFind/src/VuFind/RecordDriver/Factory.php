@@ -58,11 +58,9 @@ class Factory
     /**
      * Factory for LibGuides record driver.
      *
-     * @param ServiceManager $sm Service manager.
-     *
      * @return LibGuides
      */
-    public static function getLibGuides(ServiceManager $sm)
+    public static function getLibGuides()
     {
         return new LibGuides();
     }
