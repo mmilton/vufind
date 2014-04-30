@@ -408,6 +408,25 @@ class Options extends \VuFind\Search\Base\Options
     }
 
     /**
+     * Map EBSCO sort labels to standard VuFind text.
+     *
+     * @param string $label Label to transform
+     *
+     * @return string
+     */
+    protected function mapSortLabel($label)
+    {
+        switch ($label) {
+        case 'Date Newest':
+            return 'sort_year';
+        case 'Date Oldest':
+            return 'sort_year asc';
+        default:
+            return 'sort_' . strtolower($label);
+        }
+    }
+
+    /**
      * Populate available search criteria from the EDS API Info method
      *
      * @return void
@@ -424,7 +443,8 @@ class Options extends \VuFind\Search\Base\Options
             $this->sortOptions = array();
             if (isset($availCriteria['AvailableSorts'])) {
                 foreach ($availCriteria['AvailableSorts'] as $sort) {
-                    $this->sortOptions[$sort['Id']] = $sort['Label'];
+                    $this->sortOptions[$sort['Id']]
+                        = $this->mapSortLabel($sort['Label']);
                 }
             }
 

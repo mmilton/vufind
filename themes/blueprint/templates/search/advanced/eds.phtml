@@ -1,67 +1,70 @@
 <? if (!empty($this->expanderList)): ?>
-	<fieldset class="span-5">
-		<legend><?=$this->transEsc('Search Modes and Expanders')?></legend>
-  		<? foreach ($this->expanderList as $field => $expander): 
-  				$value = $expander['Value'] ?>
-				<label class="displayBlock" for="expand_<?=$this->escapeHtml(str_replace(' ', '+', $field))?>"><?=$this->transEsc($expander['Label'])?></label>
-    			<input id="expand_<?=$this->escapeHtml($field)?>" type="checkbox" <?=(isset($expander['selected']) && $expander['selected'])?'checked="checked"':''?> name="filter[]" value="EXPAND:<?=$this->escapeHtml($value)?>">
-		<? endforeach; ?>
-		
-		<label class="displayBlock" for="searchModes">Search mode</label>
-		<select id="searchMode_<?=$this->escapeHtml($field)?>" name="filter[]">
-		<? foreach ($this->searchModes as $field => $searchMode): 
-  				$value = $searchMode['Value'] ?>
-    			<option  <?=(isset($searchMode['selected']) && $searchMode['selected'])?'selected="selected"':''?>  value="SEARCHMODE:<?=$this->escapeHtml($value)?>"><?=$this->transEsc($searchMode['Label'])?></option>
-		<? endforeach; ?>
-		</select>
-  	</fieldset>
+  <fieldset class="span-5">
+    <legend><?=$this->transEsc('eds_modes_and_expanders')?></legend>
+    <? foreach ($this->expanderList as $field => $expander):
+       $value = $expander['Value'] ?>
+       <label class="displayBlock" for="expand_<?=$this->escapeHtml(str_replace(' ', '+', $field))?>"><?=$this->transEsc('eds_expander_' . $value, array(), $expander['Label'])?></label>
+       <input id="expand_<?=$this->escapeHtml(str_replace(' ', '+', $field))?>" type="checkbox" <?=(isset($expander['selected']) && $expander['selected'])?'checked="checked"':''?> name="filter[]" value="EXPAND:<?=$this->escapeHtml($value)?>">
+    <? endforeach; ?>
+
+    <label class="displayBlock" for="searchModes"><?=$this->transEsc('Search Mode')?></label>
+    <select id="searchMode_<?=$this->escapeHtml($field)?>" name="filter[]">
+      <? foreach ($this->searchModes as $field => $searchMode):
+         $value = $searchMode['Value'] ?>
+         <option <?=(isset($searchMode['selected']) && $searchMode['selected'])?'selected="selected"':''?>  value="SEARCHMODE:<?=$this->escapeHtml($value)?>">
+           <?= /* 'Label' comes from API and is always in English; try to translate structured value before using it: */ $this->transEsc('eds_mode_' . $value, array(), $searchMode['Label']) ?>
+         </option>
+      <? endforeach; ?>
+    </select>
+  </fieldset>
   <div class="clear"></div>
 <? endif; ?>
 
-
 <? if (!empty($this->limiterList)): ?>
-	<fieldset class="span-5">
-		<legend><?=$this->transEsc('Limit your results')?></legend>
+    <fieldset class="span-5">
+        <legend><?=$this->transEsc('Limit To')?></legend>
   <? foreach ($this->limiterList as $field => $facet): ?>
-  	<? switch($facet['Type']){
-		case 'multiselectvalue': ?>
-			<label class="displayBlock" for="limit_<?=$this->escapeHtml(str_replace(' ', '+', $field))?>"><?=$this->transEsc($facet['Label'])?></label>
-    		<select id="limit_<?=$this->escapeHtml($field)?>" name="filter[]" multiple="multiple" size="10">
-				<? foreach ($facet['LimiterValues'] as $id => $facetValue): ?>
-        			<? $value = $facetValue['Value']; ?>
-        			<option value="<?='LIMIT|'.$this->escapeHtml($field . ':' . $facetValue['Value'])?>"<?=(isset($facetValue['selected']) && $facetValue['selected'])?' selected="selected"':''?>><?=$this->escapeHtml($facetValue['Value'])?></option>
-      			<? endforeach; ?>
-    		</select>
-    		<!-- <br/> -->
-    		<? break;
-		case 'select': 
-			$value = $facet['LimiterValues'][0]['Value'] ?>
-			<label class="displayBlock" for="limit_<?=$this->escapeHtml(str_replace(' ', '+', $field))?>"><?=$this->transEsc($facet['Label'])?></label>
-    		<input id="limit_<?=$this->escapeHtml($field)?>" type="checkbox" <?=(isset($facet['LimiterValues'][0]['selected']) && $facet['LimiterValues'][0]['selected'])?'checked="checked"':''?> name="filter[]" value="<?=$this->escapeHtml('LIMIT|'.$field . ':' . $value)?>">
-			    		<!-- <br/> -->
-			<? break;
-		case 'text': ?>
-			<!-- not implemented -->
-			<? break;
-		case 'numeric':?>
-			<!--  not implemented -->
-			<? break;
-		case 'numericrange':?>
-			<!--  not implemented -->
-			<? break;
-		case 'ymrange': ?>
-			<!--  not implemented -->
-			<? break;
-		case 'yrange:' ?>
-			<!--  not implemented -->
-			<? break;
-		case 'historicalrange':?>
-			<!--  not implemented -->
-			<? break;
-		case 'singleselectvalue':?>
-			<!--  not implemented -->
-			<? break;
-     	}; ?>
+    <? switch($facet['Type']){
+        case 'multiselectvalue': ?>
+            <label class="displayBlock" for="limit_<?=$this->escapeHtml(str_replace(' ', '+', $field))?>"><?=$this->transEsc($facet['Label'])?></label>
+            <select id="limit_<?=$this->escapeHtml($field)?>" name="filter[]" multiple="multiple" size="10">
+                <? foreach ($facet['LimiterValues'] as $id => $facetValue): ?>
+                    <? $value = $facetValue['Value']; ?>
+                    <option value="<?='LIMIT|'.$this->escapeHtml($field . ':' . $facetValue['Value'])?>"<?=(isset($facetValue['selected']) && $facetValue['selected'])?' selected="selected"':''?>><?=$this->escapeHtml($facetValue['Value'])?></option>
+                <? endforeach; ?>
+            </select>
+            <!-- <br/> -->
+            <? break;
+        case 'select':
+            $value = $facet['LimiterValues'][0]['Value'] ?>
+            <label class="displayBlock" for="limit_<?=$this->escapeHtml(str_replace(' ', '+', $field))?>">
+              <?=$this->transEsc('eds_limiter_' . $field, array(), $facet['Label'])?>
+            </label>
+            <input id="limit_<?=$this->escapeHtml(str_replace(' ', '+', $field))?>" type="checkbox" <?=(isset($facet['LimiterValues'][0]['selected']) && $facet['LimiterValues'][0]['selected'])?'checked="checked"':''?> name="filter[]" value="<?=$this->escapeHtml('LIMIT|'.$field . ':' . $value)?>">
+                        <!-- <br/> -->
+            <? break;
+        case 'text': ?>
+            <!-- not implemented -->
+            <? break;
+        case 'numeric':?>
+            <!--  not implemented -->
+            <? break;
+        case 'numericrange':?>
+            <!--  not implemented -->
+            <? break;
+        case 'ymrange': ?>
+            <!--  not implemented -->
+            <? break;
+        case 'yrange:' ?>
+            <!--  not implemented -->
+            <? break;
+        case 'historicalrange':?>
+            <!--  not implemented -->
+            <? break;
+        case 'singleselectvalue':?>
+            <!--  not implemented -->
+            <? break;
+        }; ?>
   <? endforeach; ?>
   <div class="clear"></div>
   <? if (isset($this->dateRangeLimit)): ?>
@@ -77,7 +80,7 @@
   </fieldset>
 <? endif; ?>
   </fieldset>
-  
- <div class="clear"></div> 
+
+ <div class="clear"></div>
 <? endif; ?>
 <div class="clear"></div>
