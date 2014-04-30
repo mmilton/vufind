@@ -589,8 +589,26 @@ class Options extends \VuFind\Search\Base\Options
             }
         }
     }
+
     /**
-     * Obtain limiters to display ont the basic search screen
+     * Get a translation string (if available) or else use a default
+     *
+     * @param string $label   Translation string to look up
+     * @param string $default Default to use if no translation found
+     *
+     * @return string
+     */
+    protected function getLabelForCheckboxFilter($label, $default)
+    {
+        // If translation doesn't change the label, we don't want to
+        // display the non-human-readable version so we should instead
+        // return the EDS-provided English default.
+        return ($label == $this->translate($label))
+            ? $default : $label;
+    }
+
+    /**
+     * Obtain limiters to display on the basic search screen
      *
      * @return array
      */
@@ -602,7 +620,9 @@ class Options extends \VuFind\Search\Base\Options
                 $limiter = $this->limiterOptions[$key] ;
                 $ssLimiterOptions[$key] = array(
                     'selectedvalue' => 'LIMIT|'.$key.':y',
-                    'description' => $limiter['Label'],
+                    'description' => $this->getLabelForCheckboxFilter(
+                        'eds_limiter_' . $key, $limiter['Label']
+                    ),
                     'selected' => ('y' == $limiter['DefaultOn'])? true : false
                 );
             }
@@ -623,7 +643,9 @@ class Options extends \VuFind\Search\Base\Options
                 $expander = $this->expanderOptions[$key];
                 $ssExpanderOptions[$key] = array(
                     'selectedvalue' => 'EXPAND:'.$key,
-                    'description' => $expander['Label'],
+                    'description' => $this->getLabelForCheckboxFilter(
+                        'eds_expander_' . $key, $expander['Label']
+                    ),
                     'selected' =>(isset($defaultExpander[$key]))? true : false
                 );
             }
