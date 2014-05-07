@@ -201,7 +201,7 @@ class Params extends \VuFind\Search\Base\Params
         $label = $this->getFacetLabel('SEARCHMODE');
         if (isset($filters[$label])) {
             foreach ($filters[$label] as $i => $val) {
-                $filter[$label][$i]['suppressDisplay'] = true;
+                $filters[$label][$i]['suppressDisplay'] = true;
             }
         }
         return $filters;
