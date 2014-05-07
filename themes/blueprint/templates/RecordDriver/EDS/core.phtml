@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="/vufind/themes/blueprint/css/EDS.css" type="text/css" />
+<? $this->headLink()->appendStylesheet('EDS.css'); ?>
 <?
     $items = $this->driver->getItems();
     $dbLabel = $this->driver->getDbLabel();
@@ -30,7 +30,7 @@
     <? endif; ?>
 
     <?if ($this->driver->getHTMLFullTextAvailability()): 
-    	$fullText = $this->driver->getHtmlFullText();?>
+        $fullText = $this->driver->getHtmlFullText();?>
       <tr id="html" valign="top">
         <td colspan="2" style="padding:10px 0; border: 0">
           <?=$fullText?>
@@ -40,8 +40,8 @@
       <tr id="html" valign="top">
         <td colspan="2" style="padding:10px 0; border: 0">
           <p>
-          	<a class="login" href="<?=$this->url('myresearch-home')?>"><strong><?=$this->transEsc('login_for_full_access')?></strong></a>
-    		<?=$this->transEsc('fulltext_not_for_guests')?>
+            <a class="login" href="<?=$this->url('myresearch-home')?>"><strong><?=$this->transEsc('login_for_full_access')?></strong></a>
+            <?=$this->transEsc('fulltext_not_for_guests')?>
             <br />
             <strong><?=sprintf($this->transEsc('login_for_full_access'), $link)?></strong>
           </p>
@@ -61,7 +61,7 @@
   
   <div class="external-links">
     <? $pLink = $this->driver->getPLink();
-    	if($pLink): ?>
+        if($pLink): ?>
       <span>
         <a href="<?=$pLink?>">
           <?=$this->transEsc('View in EDS')?>
@@ -69,7 +69,7 @@
       </span><br />
     <? endif; ?>
     <? $pdfLink = $this->driver->getPdfLink();
-    	if ($pdfLink): ?>
+        if ($pdfLink): ?>
       <span>
         <a href="<?=$pdfLink?>" class="icon pdf fulltext">
           <?=$this->transEsc('PDF Full Text')?>
@@ -88,9 +88,9 @@
         <div class="custom-links">
           <? foreach ($customLinks as $customLink): ?>
         <? $url = isset($customLink['Url']) ? $customLink['Url'] : ''; 
-        	$mot = isset($customLink['MouseOverText'])? $customLink['MouseOverText'] : '';
-        	$icon = isset ($customLink['Icon']) ? $customLink['Icon'] : ''; 
-        	$name = isset($customLink['Name']) ? $customLink['Name'] : '';?>
+            $mot = isset($customLink['MouseOverText'])? $customLink['MouseOverText'] : '';
+            $icon = isset ($customLink['Icon']) ? $customLink['Icon'] : ''; 
+            $name = isset($customLink['Name']) ? $customLink['Name'] : '';?>
         <span>
           <a href="<?=$url?>" target="_blank" title="<?=$mot?>" class="custom-link">
             <? if ($icon): ?><img src="<?=$icon?>" /><? endif; ?><?=$name?>
