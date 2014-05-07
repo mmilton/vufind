@@ -130,8 +130,8 @@ class Options extends \VuFind\Search\Base\Options
         $searchSettings = $configLoader->get($this->searchIni);
         parent::__construct($configLoader);
         $this->viewOptions = array(
-            'list|title' => 'title', 'list|brief' => 'brief',
-            'list|detailed'=>'detailed'
+            'list|title' => 'Title View', 'list|brief' => 'Brief View',
+            'list|detailed'=>'Detailed View'
         );
         $this->apiInfo = $apiInfo;
         $this->setOptionsFromApi($searchSettings);
