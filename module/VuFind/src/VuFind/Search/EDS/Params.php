@@ -402,8 +402,8 @@ class Params extends \VuFind\Search\Base\Params
         $list = array();
         foreach ($this->getOptions()->getViewOptions() as $key => $value) {
             $list[$key] = array(
-                    'desc' => $value,
-                    'selected' => ($key == $this->getView().'|'.$this->getEdsView())
+                'desc' => $value,
+                'selected' => ($key == $this->getView().'|'.$this->getEdsView())
             );
         }
         return $list;
