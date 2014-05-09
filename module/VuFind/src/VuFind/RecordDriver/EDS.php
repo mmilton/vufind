@@ -176,8 +176,9 @@ class EDS extends SolrDefault
     {
         return (isset($this->fields['FullText']) &&
                 isset($this->fields['FullText']['Text']) &&
-                isset($this->fields['FullText']['Text']['Availability'])) ?
-                true : false ;
+                isset($this->fields['FullText']['Text']['Availability']) &&
+                '1' == $this->fields['FullText']['Text']['Availability']) ?
+                true : false;
     }
 
     /**
