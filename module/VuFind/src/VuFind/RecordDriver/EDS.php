@@ -39,10 +39,6 @@ namespace VuFind\RecordDriver;
 class EDS extends SolrDefault
 {
     /**
-     * Whether or not to return decoded data from get methods.
-     */
-    public $decodeData = true;
-    /**
      * Return the unique identifier of this record within the Solr index;
      * useful for retrieving additional information (like tags and user
      * comments) from the external MySQL database.
@@ -129,8 +125,6 @@ class EDS extends SolrDefault
         }
         return $authors;
     }
-
-
 
     /**
      * Get the custom links of the record.
@@ -421,8 +415,6 @@ class EDS extends SolrDefault
         return $linkedString;
     }
 
-
-
     /**
      * Parse a SimpleXml element and
      * return it's inner XML as an HTML string
@@ -550,5 +542,30 @@ class EDS extends SolrDefault
         return $data;
     }
 
+    /**
+     * Get an array of strings representing citation formats supported
+     * by this record's data (empty if none).  For possible legal values,
+     * see /application/themes/root/helpers/Citation.php, getCitation()
+     * method.
+     *
+     * @return array Strings representing citation formats.
+     */
+    protected function getSupportedCitationFormats()
+    {
+        return array();
+    }
 
+    /**
+     * Indicate whether export is disabled for a particular format.
+     *
+     * @param string $format Export format
+     *
+     * @return bool
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
+    public function exportDisabled($format)
+    {
+        // EDS is not export-friendly; disable all formats.
+        return true;
+    }
 }
