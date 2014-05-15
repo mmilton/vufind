@@ -52,6 +52,17 @@ class EdsrecordController extends AbstractRecord
     }
 
     /**
+     * PDF display action.
+     *
+     * @return mixed
+     */
+    public function pdfAction()
+    {
+        $driver = $this->loadRecord();
+        return $this->redirect()->toUrl($driver->getPdfLink());
+    }
+
+    /**
      * Is the result scroller active?
      *
      * @return bool
