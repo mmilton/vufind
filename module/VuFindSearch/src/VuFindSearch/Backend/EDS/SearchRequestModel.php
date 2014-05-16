@@ -434,6 +434,18 @@ class SearchRequestModel
      */
     public static function escapeSpecialCharacters($value)
     {
+        return addcslashes($value, ":,");
+    }
+    
+     /**
+     * Escape characters that may be present in the action parameter syntax
+     *
+     * @param string $value The value to escape
+     *
+     * @return string       The value with special characters escaped
+     */
+    public static function escapeSpecialCharactersForActions($value)
+    {
         return addcslashes($value, ":,()");
     }
 
