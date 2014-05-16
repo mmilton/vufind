@@ -685,4 +685,32 @@ class Options extends \VuFind\Search\Base\Options
     {
         return $this->hiddenFilters;
     }
+
+    /**
+     * Get default filters to apply to an empty search.
+     *
+     * @return array
+     */
+    public function getDefaultFilters()
+    {
+        // Populate defaults if not already set:
+        if (empty($this->defaultFilters)) {
+            //expanders
+            $expanders = $this->getDefaultExpanders();
+            foreach ($expanders as $expander) {
+                $this->defaultFilters[] = 'EXPAND:'.$expander;
+            }
+
+            //limiters
+            $limiters = $this->getAvailableLimiters();
+            foreach ($limiters as $key => $value) {
+                if ('select' == $value['Type'] && 'y' == $value['DefaultOn']) {
+                    //only select limiters can be defaulted on limiters can be defaulted
+                    $val = $value['LimiterValues'][0]['Value'];
+                    $this->defaultFilters[] = 'LIMIT|'.$key.':'.$val;
+                }
+            }
+        }
+        return $this->defaultFilters;
+    }
 }

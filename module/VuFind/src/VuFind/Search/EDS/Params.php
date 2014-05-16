@@ -73,11 +73,6 @@ class Params extends \VuFind\Search\Base\Params
      */
     public function initFromRequest($request)
     {
-        $origin = $request->get('origin');
-        if ('home' == $origin) {
-            $this->setAPIDefaults();
-        }
-
         parent::initFromRequest($request);
 
         //make sure that the searchmode parameter is set
@@ -407,31 +402,6 @@ class Params extends \VuFind\Search\Base\Params
             );
         }
         return $list;
-    }
-
-    /**
-     * This method set the default parameters that are returned in the INFO method
-     * These should only be set on the 'first' search
-     *
-     * @return void
-     */
-    protected function setAPIDefaults()
-    {
-        //expanders
-        $expanders = $this->getOptions()->getDefaultExpanders();
-        foreach ($expanders as $expander) {
-            $this->addFilter('EXPAND:'.$expander);
-        }
-
-        //limiters
-        $limiters = $this->getOptions()->getAvailableLimiters();
-        foreach ($limiters as $key => $value) {
-            if ('select' == $value['Type'] && 'y' == $value['DefaultOn']) {
-                //only select limiters can be defaulted on limiters can be defaulted
-                $val = $value['LimiterValues'][0]['Value'];
-                $this->addFilter('LIMIT|'.$key.':'.$val);
-            }
-        }
     }
 
     /**

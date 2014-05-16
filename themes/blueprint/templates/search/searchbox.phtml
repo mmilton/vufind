@@ -3,7 +3,7 @@
     if (!isset($this->searchClassId)) {
         $this->searchClassId = 'Solr';
     }
-    
+
     // Load search actions and settings (if any):
     $options = $this->searchOptions($this->searchClassId);
     $handlers = $this->searchbox()->getHandlers(
@@ -105,9 +105,6 @@
       }
       if (!empty($lastSort)) {
         echo '<input type="hidden" name="sort" value="' . $this->escapeHtml($lastSort) . '" />';
-      }
-      if (!empty($this->origin)){
-        echo '<input type="hidden" name="origin" value="' . $this->escapeHtml($this->origin) . '" />';
       }
       ?>
     </form>
