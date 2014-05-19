@@ -249,7 +249,7 @@ class EDS extends SolrDefault
     }
 
     /**
-     * Get the PDF url of the record. If missing, return falsel
+     * Get the PDF url of the record. If missing, return false
      *
      * @return string
      */

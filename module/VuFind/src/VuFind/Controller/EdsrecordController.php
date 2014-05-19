@@ -59,7 +59,11 @@ class EdsrecordController extends AbstractRecord
     public function pdfAction()
     {
         $driver = $this->loadRecord();
-        return $this->redirect()->toUrl($driver->getPdfLink());
+        //if the user is a guest, redirect them to the login screen.
+        if(!$this->isAuthenticationIP() && false == $this->getUser())
+    		return $this->forceLogin();
+        else
+	        return $this->redirect()->toUrl($driver->getPdfLink());
     }
 
     /**
@@ -72,5 +76,18 @@ class EdsrecordController extends AbstractRecord
         $config = $this->getServiceLocator()->get('VuFind\Config')->get('EDS');
         return (isset($config->Record->next_prev_navigation)
             && $config->Record->next_prev_navigation);
+    }
+    
+    
+     /**
+     * Is IP Authentication being used?
+     *
+     * @return bool
+     */
+    protected function isAuthenticationIP()
+    {
+        $config = $this->getServiceLocator()->get('VuFind\Config')->get('EDS');
+        return (isset($config->EBSCO_Account->ip_auth)
+            && 'true' ==  $config->EBSCO_Account->ip_auth);
     }
 }

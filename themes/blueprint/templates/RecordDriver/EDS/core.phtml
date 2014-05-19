@@ -36,17 +36,6 @@
           <?=$fullText?>
         </td>
       </tr>
-    <? elseif ($accessLevel && !$this->account->isLoggedIn()): ?>
-      <tr id="html" valign="top">
-        <td colspan="2" style="padding:10px 0; border: 0">
-          <p>
-            <a class="login" href="<?=$this->url('myresearch-home')?>"><strong><?=$this->transEsc('login_for_full_access')?></strong></a>
-            <?=$this->transEsc('fulltext_not_for_guests')?>
-            <br />
-            <strong><?=sprintf($this->transEsc('login_for_full_access'), $link)?></strong>
-          </p>
-        </td>
-      </tr>
     <? endif; ?>
   </table>
 </div>

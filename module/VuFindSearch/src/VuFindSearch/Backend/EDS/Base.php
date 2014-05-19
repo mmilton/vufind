@@ -157,7 +157,7 @@ abstract class EdsApi_REST_Base
             'Create Session for profile: '
             . "$profile, guest: $isGuest, authToken: $authToken "
         );
-        $qs = array('profile' => $profile, 'isguest' => $isGuest);
+        $qs = array('profile' => $profile, 'guest' => $isGuest);
         $url = $this->edsApiHost.'/createsession';
         $headers = $this->setTokens($authToken, null);
         return $this->call($url, $headers, $qs);

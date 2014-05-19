@@ -597,8 +597,9 @@ class Backend implements BackendInterface
      */
     protected function createEBSCOSession()
     {
-        //If the user is not logged in, the treat them as a guest
-        $guest = $this->isGuest();
+        //If the user is not logged in, the treat them as a guest. Unless they are using IP Authentication.
+        //If IP Authentication is used, then don't treat them as a guest. 
+        $guest = ($this->isAuthenticationIP()) ? 'n' : $this->isGuest();
         $container = new \Zend\Session\Container('EBSCO');
 
         //if there is no profile passed, use the one set in the configuration file
@@ -631,6 +632,18 @@ class Backend implements BackendInterface
         return 'y';
     }
 
+     /**
+     * Is IP Authentication being used?
+     *
+     * @return bool
+     */
+    protected function isAuthenticationIP()
+    {
+        $config = $this->getServiceLocator()->get('VuFind\Config')->get('EDS');
+        return (isset($config->EBSCO_Account->ip_auth)
+            && 'true' ==  $config->EBSCO_Account->ip_auth);
+    }
+    
     /**
      * Obtain the session to use with the EDS API from cache if it exists. If not,
      * then generate a new one.
