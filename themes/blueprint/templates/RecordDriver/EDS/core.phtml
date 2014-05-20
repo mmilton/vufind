@@ -6,6 +6,7 @@
     $pubType = $this->driver->getPubType();
     $accessLevel = $this->driver->getAccessLevel();
     $customLinks = $this->driver->getCustomLinks();
+    $restrictedView = empty($this->driver->getAccessLevel()) ? false : true; 
 ?>
 <div class="span-13">
   <h1>
@@ -29,13 +30,25 @@
       </tr>
     <? endif; ?>
 
-    <?if ($this->driver->getHTMLFullTextAvailability()): 
+    <?if ($this->driver->getHTMLFullTextAvailability() && !$restrictedView): 
         $fullText = $this->driver->getHtmlFullText();?>
       <tr id="html" valign="top">
         <td colspan="2" style="padding:10px 0; border: 0">
           <?=$fullText?>
         </td>
       </tr>
+      <? elseif ($this->driver->getHTMLFullTextAvailability() && $restrictedView): ?>
+      	<tr id="html" valign="top">
+      		<td colspan="2" style="padding:10px 0; border: 0">
+      			<p>
+      				<?=$this->transEsc('Full text is not displayed to guests')?>
+      				<br/>
+      				<a class="login" href="<?=$this->url('myresearch-home')?>">
+      					<strong><?=$this->transEsc('Login for full access')?></strong>
+      				</a>
+      			</p>
+      		</td>
+      	</tr>
     <? endif; ?>
   </table>
 </div>
@@ -91,5 +104,4 @@
     <? endif; ?>
   </div>
 </div>
-
 <div class="clear"></div>

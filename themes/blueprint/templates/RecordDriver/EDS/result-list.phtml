@@ -1,4 +1,7 @@
-<? $this->headLink()->appendStylesheet('EDS.css'); ?>
+<? 
+	$this->headLink()->appendStylesheet('EDS.css');
+    $restrictedView = empty($this->driver->getAccessLevel()) ? false : true; 
+?>
 <div class="result source<?=$this->escapeHtml($this->driver->getResourceSource())?> recordId<?=$this->driver->supportsAjaxStatus()?' ajaxItemId':''?>">
   <input type="hidden" value="<?=$this->escapeHtml($this->driver->getUniqueID())?>" class="hiddenId" />
   <div class="span-2">
@@ -30,9 +33,17 @@
                     </div>
                 <? endif;
             endforeach;
-        endif; ?>
-
-    
+        elseif ($restrictedView): ?>
+      		<div class="resultItemLine1">
+      			<p>
+      			    <?=$this->transEsc('This result is not displayed to guests')?>
+      			    <br />
+      				<a class="login" href="<?=$this->url('myresearch-home')?>">
+      					<strong><?=$this->transEsc('Login for full access')?></strong>
+      				</a>
+				</p>
+      		</div>
+      <? endif; ?>
     <? $customLinks = $this->driver->getCustomLinks();
     if (!empty($customLinks)): ?>
     <div class="resultItemLine4 custom-links">
