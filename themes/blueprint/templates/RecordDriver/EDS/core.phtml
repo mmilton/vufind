@@ -4,9 +4,9 @@
     $dbLabel = $this->driver->getDbLabel();
     $thumb = $this->driver->getThumbnail('medium');
     $pubType = $this->driver->getPubType();
-    $accessLevel = $this->driver->getAccessLevel();
     $customLinks = $this->driver->getCustomLinks();
-    $restrictedView = empty($this->driver->getAccessLevel()) ? false : true; 
+    $accessLevel = $this->driver->getAccessLevel();
+    $restrictedView = empty($accessLevel) ? false : true; 
 ?>
 <div class="span-13">
   <h1>
