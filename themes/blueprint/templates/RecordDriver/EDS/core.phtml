@@ -6,7 +6,7 @@
     $pubType = $this->driver->getPubType();
     $customLinks = $this->driver->getCustomLinks();
     $accessLevel = $this->driver->getAccessLevel();
-    $restrictedView = empty($accessLevel) ? false : true; 
+    $restrictedView = empty($accessLevel) ? false : true;
 ?>
 <div class="span-13">
   <h1>
@@ -30,7 +30,7 @@
       </tr>
     <? endif; ?>
 
-    <?if ($this->driver->getHTMLFullTextAvailability() && !$restrictedView): 
+    <?if ($this->driver->getHTMLFullTextAvailability() && !$restrictedView):
         $fullText = $this->driver->getHtmlFullText();?>
       <tr id="html" valign="top">
         <td colspan="2" style="padding:10px 0; border: 0">
@@ -38,29 +38,29 @@
         </td>
       </tr>
       <? elseif ($this->driver->getHTMLFullTextAvailability() && $restrictedView): ?>
-      	<tr id="html" valign="top">
-      		<td colspan="2" style="padding:10px 0; border: 0">
-      			<p>
-      				<?=$this->transEsc('Full text is not displayed to guests')?>
-      				<br/>
-      				<a class="login" href="<?=$this->url('myresearch-home')?>">
-      					<strong><?=$this->transEsc('Login for full access')?></strong>
-      				</a>
-      			</p>
-      		</td>
-      	</tr>
+        <tr id="html" valign="top">
+            <td colspan="2" style="padding:10px 0; border: 0">
+                <p>
+                    <?=$this->transEsc('Full text is not displayed to guests')?>
+                    <br/>
+                    <a class="login" href="<?=$this->url('myresearch-home')?>">
+                        <strong><?=$this->transEsc('Login for full access')?></strong>
+                    </a>
+                </p>
+            </td>
+        </tr>
     <? endif; ?>
   </table>
 </div>
 
 <div class="span-4 last">
   <? if ($thumb): ?>
-    <img src="<?=$this->escapeHtml($thumb)?>" class="summcover" alt="<?=$this->transEsc('book_jacket')?>"/>
+    <img src="<?=$this->escapeHtml($thumb)?>" class="summcover" alt="<?=$this->transEsc('Cover Image')?>"/>
   <? endif; ?>
   <? if ($pubType): ?>
     <p><?=$this->escapeHtml($pubType)?></p>
   <? endif; ?>
-  
+
   <div class="external-links">
     <? $pLink = $this->driver->getPLink();
         if($pLink): ?>
@@ -89,9 +89,9 @@
       <span>
         <div class="custom-links">
           <? foreach ($customLinks as $customLink): ?>
-        <? $url = isset($customLink['Url']) ? $customLink['Url'] : ''; 
+        <? $url = isset($customLink['Url']) ? $customLink['Url'] : '';
             $mot = isset($customLink['MouseOverText'])? $customLink['MouseOverText'] : '';
-            $icon = isset ($customLink['Icon']) ? $customLink['Icon'] : ''; 
+            $icon = isset ($customLink['Icon']) ? $customLink['Icon'] : '';
             $name = isset($customLink['Name']) ? $customLink['Name'] : '';?>
         <span>
           <a href="<?=$url?>" target="_blank" title="<?=$mot?>" class="custom-link">
