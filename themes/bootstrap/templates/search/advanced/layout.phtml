@@ -58,9 +58,13 @@
     <div class="row-fluid">
       <i id="groupPlaceHolder" class="icon-plus-sign"></i> <a href="#" onClick="addGroup()"><?= $this->transEsc('Add Group') ?></a>
     </div>
-    <div class="pad"><input class="btn btn-primary pull-right" type="submit" value="<?= $this->transEsc('Find')?>"></div>
-    <?=$this->render('search/advanced/solr.phtml')?>
-    <div class="pad"><input class="btn btn-primary pull-right" type="submit" value="<?= $this->transEsc('Find')?>"></div>
+    <div class="pad"><input type="submit" value="<?= $this->transEsc('Find')?>" class="btn btn-primary pull-right"/></div>
+    <? if (isset($this->extraAdvancedControls)): ?>
+      <div class="pad row-fluid">
+        <?=$this->extraAdvancedControls ?>
+      </div>
+      <input type="submit" name="submit" value="<?=$this->transEsc("Find")?>" class="btn btn-primary pull-right"/>
+    <? endif; ?>
   </div>
 
   <div class="<?=$this->layoutClass('sidebar')?>">

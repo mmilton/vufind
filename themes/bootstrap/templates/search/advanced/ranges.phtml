@@ -26,24 +26,24 @@
         $high = intval($high);
         $init = !empty($current['values'][0]) ? 'fillTexts()' : '';
         $script = <<<JS
-          $(document).ready(function() {
-            var fillTexts = function() {
-              var v = {$escField}dateSlider.getValue();
-              $('#${escField}from').val(v[0]);
-              $('#${escField}to').val(v[1]);
-            };
-            var {$escField}dateSlider = $('#{$escField}dateSlider')
-              .slider({
-                 'min':{$min},
-                 'max':{$max},
-                 'handle':"square",
-                 'tooltip':"hide",
-                 'value':[{$low},{$high}]
-              })
-              .on('slide', fillTexts)
-              .data('slider');
-            {$init}
-          });
+$(document).ready(function() {
+  var fillTexts = function() {
+    var v = {$escField}dateSlider.getValue();
+    $('#${escField}from').val(v[0]);
+    $('#${escField}to').val(v[1]);
+  };
+  var {$escField}dateSlider = $('#{$escField}dateSlider')
+    .slider({
+       'min':{$min},
+       'max':{$max},
+       'handle':"square",
+       'tooltip':"hide",
+       'value':[{$low},{$high}]
+    })
+    .on('slide', fillTexts)
+    .data('slider');
+  {$init}
+});
 JS;
       ?>
       <?=$this->inlineScript(\Zend\View\Helper\HeadScript::SCRIPT, $script, 'SET'); ?>
