@@ -78,6 +78,8 @@ $config = array(
             'cover' => 'VuFind\Controller\CoverController',
             'eds' => 'VuFind\Controller\EdsController',
             'edsrecord' => 'VuFind\Controller\EdsrecordController',
+            'eit' => 'VuFind\Controller\EITController',
+            'eitrecord' => '\VuFind\Controller\EITrecordController',
             'error' => 'VuFind\Controller\ErrorController',
             'feedback' => 'VuFind\Controller\FeedbackController',
             'help' => 'VuFind\Controller\HelpController',
@@ -353,6 +355,7 @@ $config = array(
                 'abstract_factories' => array('VuFind\RecordDriver\PluginFactory'),
                 'factories' => array(
                     'eds' => 'VuFind\RecordDriver\Factory::getEDS',
+                    'eit' => 'VuFind\RecordDriver\Factory::getEIT',
                     'libguides' => 'VuFind\RecordDriver\Factory::getLibGuides',
                     'missing' => 'VuFind\RecordDriver\Factory::getMissing',
                     'pazpar2' => 'VuFind\RecordDriver\Factory::getPazpar2',
@@ -409,6 +412,7 @@ $config = array(
             'search_backend' => array(
                 'factories' => array(
                     'EDS' => 'VuFind\Search\Factory\EdsBackendFactory',
+                    'EIT' => 'VuFind\Search\Factory\EITBackendFactory',
                     'LibGuides' => 'VuFind\Search\Factory\LibGuidesBackendFactory',
                     'Pazpar2' => 'VuFind\Search\Factory\Pazpar2BackendFactory',
                     'Primo' => 'VuFind\Search\Factory\PrimoBackendFactory',
@@ -568,6 +572,7 @@ $recordRoutes = array(
     'record' => 'Record',
     'collection' => 'Collection',
     'edsrecord' => 'EdsRecord',
+    'eitrecord' => 'EITRecord',
     'missingrecord' => 'MissingRecord',
     'primorecord' => 'PrimoRecord',
     'solrauthrecord' => 'Authority',
@@ -596,8 +601,8 @@ $staticRoutes = array(
     'Combined/Home', 'Combined/Results', 'Combined/SearchBox', 'Confirm/Confirm',
     'Cover/Show', 'Cover/Unavailable',
     'EDS/Advanced', 'EDS/Home', 'EDS/Search',
-    'Error/Unavailable',
-    'Feedback/Email', 'Feedback/Home', 'Help/Home',
+    'EIT/Advanced', 'EIT/Home', 'EIT/Search',
+    'Error/Unavailable', 'Feedback/Email', 'Feedback/Home', 'Help/Home',
     'Install/Done', 'Install/FixBasicConfig', 'Install/FixCache',
     'Install/FixDatabase', 'Install/FixDependencies', 'Install/FixILS',
     'Install/FixSecurity', 'Install/FixSolr', 'Install/Home',
