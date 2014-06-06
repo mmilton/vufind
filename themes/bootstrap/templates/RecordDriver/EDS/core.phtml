@@ -11,7 +11,7 @@
 <div class="row-fluid" vocab="http://schema.org/" resource="#record" typeof="<?=$this->driver->getSchemaOrgFormats()?> Product">
   <div class="span3">
     <? if ($thumb): ?>
-        <img src="<?=$this->escapeHtml($thumb)?>" class="summcover" alt="<?=$this->transEsc('Cover Image')?>"/>
+        <img src="<?=$this->escapeHtmlAttr($thumb)?>" class="summcover" alt="<?=$this->transEsc('Cover Image')?>"/>
     <? else: ?>
       <div class="clearfix">
         <span class="summcover pt-icon pt-<?=$this->driver->getPubTypeId()?>"></span>

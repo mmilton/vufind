@@ -55,7 +55,7 @@
 
 <div class="span-4 last">
   <? if ($thumb): ?>
-    <img src="<?=$this->escapeHtml($thumb)?>" class="summcover" alt="<?=$this->transEsc('Cover Image')?>"/>
+    <img src="<?=$this->escapeHtmlAttr($thumb)?>" class="summcover" alt="<?=$this->transEsc('Cover Image')?>"/>
   <? endif; ?>
   <? if ($pubType): ?>
     <p><?=$this->escapeHtml($pubType)?></p>

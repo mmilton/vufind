@@ -3,12 +3,12 @@
     $accessLevel = $this->driver->getAccessLevel();
     $restrictedView = empty($accessLevel) ? false : true; 
 ?>
-<div class="result source<?=$this->escapeHtml($this->driver->getResourceSource())?> recordId<?=$this->driver->supportsAjaxStatus()?' ajaxItemId':''?>">
-  <input type="hidden" value="<?=$this->escapeHtml($this->driver->getUniqueID())?>" class="hiddenId" />
+<div class="result source<?=$this->escapeHtmlAttr($this->driver->getResourceSource())?> recordId<?=$this->driver->supportsAjaxStatus()?' ajaxItemId':''?>">
+  <input type="hidden" value="<?=$this->escapeHtmlAttr($this->driver->getUniqueID())?>" class="hiddenId" />
   <div class="span-2">
     <? if ($summThumb = $this->record($this->driver)->getThumbnail()): ?>
         <a href="<?=$this->recordLink()->getUrl($this->driver)?>" class="_record_link">
-        <img src="<?=$this->escapeHtml($summThumb)?>" class="summcover" alt="<?=$this->transEsc('Cover Image')?>"/>
+        <img src="<?=$this->escapeHtmlAttr($summThumb)?>" class="summcover" alt="<?=$this->transEsc('Cover Image')?>"/>
         </a>
     <? else: ?>
         <span class="summcover pt-icon pt-<?=$this->driver->getPubTypeId()?>"></span>
@@ -87,9 +87,9 @@
         // Add JS Variables for QrCode
         $this->jsTranslations()->addStrings(array('qrcode_hide' => 'qrcode_hide', 'qrcode_show' => 'qrcode_show'));
       ?>
-      <a href="<?=$this->escapeHtml($QRCode);?>" class="qrcodeLink"><?=$this->transEsc('qrcode_show')?></a>
+      <a href="<?=$this->escapeHtmlAttr($QRCode);?>" class="qrcodeLink"><?=$this->transEsc('qrcode_show')?></a>
       <div class="qrcodeHolder">
-        <img alt="<?=$this->transEsc('QR Code')?>" class="qrcode" src="<?=$this->escapeHtml($QRCode);?>"/>
+        <img alt="<?=$this->transEsc('QR Code')?>" class="qrcode" src="<?=$this->escapeHtmlAttr($QRCode);?>"/>
       </div>
     <? endif; ?>
 
@@ -105,7 +105,7 @@
       <? $this->headScript()->appendFile('search_hierarchyTree.js'); ?>
       <? foreach ($trees as $hierarchyID => $hierarchyTitle): ?>
         <div class="hierarchyTreeLink">
-          <input type="hidden" value="<?=$this->escapeHtml($hierarchyID)?>" class="hiddenHierarchyId" />
+          <input type="hidden" value="<?=$this->escapeHtmlAttr($hierarchyID)?>" class="hiddenHierarchyId" />
           <a class="hierarchyTreeLinkText" href="<?=$this->recordLink()->getTabUrl($this->driver, 'HierarchyTree')?>?hierarchy=<?=urlencode($hierarchyID)?>#tabnav" title="<?=$this->transEsc('hierarchy_tree')?>">
             <?=$this->transEsc('hierarchy_view_context')?><? if (count($trees) > 1): ?>: <?=$this->escapeHtml($hierarchyTitle)?><? endif; ?>
           </a>
