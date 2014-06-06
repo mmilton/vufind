@@ -28,9 +28,11 @@
           <input id="search_lookfor0" type="text" name="lookfor0[]" style="margin-top:.5em;height:28px"/>
         </div>
         <div class="ui-block-b">
-          <select id="searchForm_type" name="type0[]" data-mini="true">
-            <? foreach ($options->getBasicHandlers() as $searchVal => $searchDesc): ?>
-              <option value="<?=$this->escapeHtmlAttr($searchVal)?>"<?=$this->searchIndex == $searchVal ? ' selected="selected"' : ''?>><?=$this->transEsc($searchDesc)?></option>
+          <select id="searchForm_type" name="op0[]" data-mini="true">
+            <? foreach (array('AND', 'OR', 'NOT') as $searchVal): ?>
+              <option value="<?=$this->escapeHtmlAttr($searchVal)?>"<?=$this->searchIndex == $searchVal ? ' selected="selected"' : ''?>>
+                <?=$this->transEsc($searchVal)?>
+              </option>
             <? endforeach; ?>
           </select>
         </div>
