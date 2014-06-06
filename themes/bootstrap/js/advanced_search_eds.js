@@ -119,3 +119,7 @@ function addSearchJS(group)
   addSearch(groupNum);
   return false;
 }
+
+$(document).ready(function() {
+  $('#groupPlaceHolder').hide();
+});

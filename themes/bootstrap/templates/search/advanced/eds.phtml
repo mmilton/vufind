@@ -4,8 +4,8 @@
     <? foreach ($this->expanderList as $field => $expander):
       $value = $expander['Value'] ?>
       <label class="checkbox" for="expand_<?=$this->escapeHtmlAttr(str_replace(' ', '+', $field))?>">
-        <?=$this->transEsc('eds_expander_' . $value, array(), $expander['Label'])?>
         <input id="expand_<?=$this->escapeHtmlAttr(str_replace(' ', '+', $field))?>" type="checkbox" <?=(isset($expander['selected']) && $expander['selected'])?'checked="checked"':''?> name="filter[]" value="EXPAND:<?=$this->escapeHtmlAttr($value)?>">
+        <?=$this->transEsc('eds_expander_' . $value, array(), $expander['Label'])?>
       </label>
     <? endforeach; ?>
 
@@ -27,91 +27,44 @@
     <? foreach ($this->limiterList as $field => $facet): ?>
       <? switch($facet['Type']){
           case 'multiselectvalue': ?>
-              <label for="limit_<?=$this->escapeHtmlAttr(str_replace(' ', '+', $field))?>"><?=$this->transEsc($facet['Label'])?></label>
-              <select id="limit_<?=$this->escapeHtmlAttr($field)?>" name="filter[]" multiple="multiple" size="10">
-                  <? foreach ($facet['LimiterValues'] as $id => $facetValue): ?>
-                      <? $value = $facetValue['Value']; ?>
-                      <option value="<?='LIMIT|'.$this->escapeHtmlAttr($field . ':' . $facetValue['Value'])?>"<?=(isset($facetValue['selected']) && $facetValue['selected'])?' selected="selected"':''?>><?=$this->escapeHtml($facetValue['Value'])?></option>
-                  <? endforeach; ?>
-              </select>
-              <!-- <br/> -->
-              <? break;
+            <label for="limit_<?=$this->escapeHtmlAttr(str_replace(' ', '+', $field))?>"><?=$this->transEsc($facet['Label'])?></label>
+            <select id="limit_<?=$this->escapeHtmlAttr($field)?>" name="filter[]" multiple="multiple" size="10">
+              <? foreach ($facet['LimiterValues'] as $id => $facetValue): ?>
+                <? $value = $facetValue['Value']; ?>
+                <option value="<?='LIMIT|'.$this->escapeHtmlAttr($field . ':' . $facetValue['Value'])?>"<?=(isset($facetValue['selected']) && $facetValue['selected'])?' selected="selected"':''?>><?=$this->escapeHtml($facetValue['Value'])?></option>
+              <? endforeach; ?>
+            </select>
+            <!-- <br/> -->
+            <? break;
           case 'select':
-              $value = $facet['LimiterValues'][0]['Value'] ?>
-              <label class="checkbox" for="limit_<?=$this->escapeHtmlAttr(str_replace(' ', '+', $field))?>">
-                <?=$this->transEsc('eds_limiter_' . $field, array(), $facet['Label'])?>
-                <input id="limit_<?=$this->escapeHtmlAttr(str_replace(' ', '+', $field))?>" type="checkbox" <?=(isset($facet['LimiterValues'][0]['selected']) && $facet['LimiterValues'][0]['selected'])?'checked="checked"':''?> name="filter[]" value="<?=$this->escapeHtmlAttr('LIMIT|'.$field . ':' . $value)?>">
-              </label>
-              <? break;
+            $value = $facet['LimiterValues'][0]['Value'] ?>
+            <label class="checkbox" for="limit_<?=$this->escapeHtmlAttr(str_replace(' ', '+', $field))?>">
+              <input id="limit_<?=$this->escapeHtmlAttr(str_replace(' ', '+', $field))?>" type="checkbox" <?=(isset($facet['LimiterValues'][0]['selected']) && $facet['LimiterValues'][0]['selected'])?'checked="checked"':''?> name="filter[]" value="<?=$this->escapeHtmlAttr('LIMIT|'.$field . ':' . $value)?>">
+              <?=$this->transEsc('eds_limiter_' . $field, array(), $facet['Label'])?>
+            </label>
+            <? break;
           case 'text': ?>
-              <!-- not implemented -->
-              <? break;
+            <!-- not implemented -->
+            <? break;
           case 'numeric':?>
-              <!--  not implemented -->
-              <? break;
+            <!--  not implemented -->
+            <? break;
           case 'numericrange':?>
-              <!--  not implemented -->
-              <? break;
+            <!--  not implemented -->
+            <? break;
           case 'ymrange': ?>
-              <!--  not implemented -->
-              <? break;
+            <!--  not implemented -->
+            <? break;
           case 'yrange:' ?>
-              <!--  not implemented -->
-              <? break;
+            <!--  not implemented -->
+            <? break;
           case 'historicalrange':?>
-              <!--  not implemented -->
-              <? break;
+            <!--  not implemented -->
+            <? break;
           case 'singleselectvalue':?>
-              <!--  not implemented -->
-              <? break;
+            <!--  not implemented -->
+            <? break;
         }; ?>
     <? endforeach; ?>
   </fieldset>
-<? endif; ?>
-
-<? if (isset($this->dateRangeLimit)): ?>
-  <? /* Load the publication date slider UI widget */ $this->headScript()->appendFile('pubdate_slider.js'); ?>
-  <input type="hidden" name="daterange[]" value="PublicationDate"/>
-  <fieldset class="publishDateLimit span4" id="PublicationDate">
-    <legend><?=$this->transEsc('adv_search_year')?></legend>
-    <div class="row-fluid">
-      <label class="span6" for="PublicationDatefrom">
-        <?=$this->transEsc('date_from')?>:<br/>
-        <input type="text" maxlength="4" class="span12" name="PublicationDatefrom" id="PublicationDatefrom" value="" />
-      </label>
-      <label class="span6" for="PublicationDateto">
-        <?=$this->transEsc('date_to')?>:<br/>
-        <input type="text" maxlength="4" class="span12" name="PublicationDateto" id="PublicationDateto" value="" />
-      </label>
-    </div>
-    <div class="row-fluid"><input type="text" class="span10 hidden" id="PublicationDateSlider"/></div>
-  </fieldset>
-  <? $this->headScript()->appendFile('bootstrap-slider.js'); ?>
-  <?
-    $min = !empty($this->dateRangeLimit[0]) ? min($this->dateRangeLimit[0], 1400) : 1400;
-    $future = date('Y', time()+31536000);
-    $max = !empty($this->dateRangeLimit[1]) ? max($future, $this->dateRangeLimit[1]) : $future;
-    $low  = !empty($this->dateRangeLimit[0]) ? $this->dateRangeLimit[0] : $min;
-    $high = !empty($this->dateRangeLimit[1]) ? $this->dateRangeLimit[1] : $max;
-    $script = <<<JS
-$(document).ready(function() {
-  var fillTexts = function() {
-    var v = dateSlider.getValue();
-    $('#PublicationDatefrom').val(v[0]);
-    $('#PublicationDateto').val(v[1]);
-  };
-  var dateSlider = $('#PublicationDateSlider')
-    .slider({
-       'min':{$min},
-       'max':{$max},
-       'handle':"square",
-       'tooltip':"hide",
-       'value':[{$low},{$high}]
-    })
-    .on('slide', fillTexts)
-    .data('slider');
-});
-JS;
-          ?>
-          <?=$this->inlineScript(\Zend\View\Helper\HeadScript::SCRIPT, $script, 'SET'); ?>
 <? endif; ?>
