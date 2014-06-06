@@ -42,7 +42,6 @@
 
 <?=$this->flashmessages()?>
 <form class="form-inline" method="get" action="<?=$this->url($this->options->getSearchAction())?>" id="advSearchForm" name="searchForm">
-
   <div class="<?=$this->layoutClass('mainbody')?>">
     <input type="hidden" name="sort" value="relevance">
     <div class="clearfix">
@@ -58,7 +57,7 @@
     <div id="groupPlaceHolder" class="row-fluid">
       <i class="icon-plus-sign"></i> <a href="#" onClick="addGroup()"><?= $this->transEsc('Add Group') ?></a>
     </div>
-    <div class="pad"><input type="submit" value="<?= $this->transEsc('Find')?>" class="btn btn-primary pull-right"/></div>
+    <input type="submit" value="<?= $this->transEsc('Find')?>" class="btn btn-primary pull-right"/>
     <? if (isset($this->extraAdvancedControls)): ?>
       <div class="pad row-fluid">
         <?=$this->extraAdvancedControls ?>
