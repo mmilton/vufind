@@ -16,8 +16,8 @@ function addSearch(group, term, field, op)
   var inputID = group+'_'+$('#group'+group+' input').length;
   var newSearch ='<div class="search" id="search'+inputID+'"><div class="span3 text-right">';
   if (typeof groupSearches[group] == "undefined") {
-    newSearch += '<label for="search_lookfor' + group + '_' + groupSearches[group] + '"><span class="help-inline">' + searchLabel + ':</span></label>';
     groupSearches[group] = 0;
+    newSearch += '<input type="hidden" name="op' + group + '[]" value="AND"/><label for="search_lookfor' + group + '_' + groupSearches[group] + '"><span class="help-inline">' + searchLabel + ':</span></label>';
   } else {
     newSearch += '<select id="search_op' + group + '_' + groupSearches[group] + '" name="op' + group + '[]" class="span9">';
     for(var i=0, len= booleanSearchOperators.length; i < len; i++) {
